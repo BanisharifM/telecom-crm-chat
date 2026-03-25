@@ -1,0 +1,15 @@
+# Large data files — don't load into context
+*.xlsx
+*.csv
+*.parquet
+*.db
+*.sqlite
+*.zip
+
+# Build artifacts
+node_modules/
+__pycache__/
+dist/
+build/
+.next/
+out/
