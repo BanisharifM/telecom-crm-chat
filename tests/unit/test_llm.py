@@ -35,10 +35,13 @@ class TestParseResponse:
         with pytest.raises(ValueError, match="missing 'sql'"):
             _parse_response(raw)
 
-    def test_invalid_json(self):
-        raw = "This is not JSON at all"
-        with pytest.raises(ValueError, match="No JSON found"):
-            _parse_response(raw)
+    def test_plain_text_becomes_conversational(self):
+        """Non-JSON responses (greetings) should become conversational responses."""
+        raw = "Hi there! I'm your data assistant. How can I help?"
+        result = _parse_response(raw)
+        assert result.chart_type == "none"
+        assert "Hi there" in result.explanation
+        assert result.sql == "SELECT 1"
 
     def test_defaults_chart_type(self):
         raw = '{"sql": "SELECT 1", "explanation": "test"}'

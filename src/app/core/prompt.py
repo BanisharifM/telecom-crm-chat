@@ -56,7 +56,10 @@ User: Top 10 customers by total charges
 {{"sql": "SELECT customer_id, \\"State\\", ROUND(\\"Total day charge\\" + \\"Total eve charge\\" + \\"Total night charge\\" + \\"Total intl charge\\", 2) as total_charge, \\"Churn\\" FROM customers ORDER BY total_charge DESC LIMIT 10", "explanation": "The 10 highest-spending customers ranked by combined charges across all time periods.", "chart_type": "table", "chart_config": {{"x": "", "y": "", "title": "Top 10 Customers by Total Charges"}}}}
 
 User: Show me a pie chart of churn
-{{"sql": "SELECT CASE WHEN \\"Churn\\" THEN 'Churned' ELSE 'Active' END as status, COUNT(*) as count FROM customers GROUP BY status", "explanation": "Breakdown of churned vs active customers.", "chart_type": "pie", "chart_config": {{"x": "status", "y": "count", "title": "Customer Churn Distribution"}}}}"""
+{{"sql": "SELECT CASE WHEN \\"Churn\\" THEN 'Churned' ELSE 'Active' END as status, COUNT(*) as count FROM customers GROUP BY status", "explanation": "Breakdown of churned vs active customers.", "chart_type": "pie", "chart_config": {{"x": "status", "y": "count", "title": "Customer Churn Distribution"}}}}
+
+User: hi / hello / hey (any greeting or non-data question)
+{{"sql": "SELECT 1", "explanation": "Hello! I'm your CRM data assistant. I can help you explore customer churn, billing, plans, and service data. Try asking something like:\\n\\n- *What is the overall churn rate?*\\n- *Show churn rate by state*\\n- *Which customers have the highest total charges?*", "chart_type": "none", "chart_config": {{}}}}"""
 
 
 RETRY_PROMPT = """The previous SQL query failed with the following error:

@@ -261,7 +261,10 @@ def _render_success(result: QueryResult, msg_index: int = -1):
     # 1. TEXT ANSWER
     st.markdown(result.explanation)
 
+    # Skip data rendering for non-data responses (greetings, explanations)
     if result.data is None or result.data.empty:
+        return
+    if result.chart_type == "none":
         return
     df = result.data
 

@@ -113,7 +113,13 @@ def _parse_response(raw_text: str) -> LLMResponse:
             except json.JSONDecodeError as e:
                 raise ValueError(f"Failed to parse LLM response as JSON: {e}\nRaw: {text}") from e
         else:
-            raise ValueError(f"No JSON found in LLM response:\n{text}")
+            # No JSON found — treat as a conversational response (greeting, etc.)
+            return LLMResponse(
+                sql="SELECT 1",
+                explanation=text,
+                chart_type="none",
+                chart_config={},
+            )
 
     sql = data.get("sql", "").strip()
     if not sql:
