@@ -242,9 +242,7 @@ def _handle_question(question: str):
 
     # Process with LLM + DuckDB
     with st.chat_message("assistant", avatar="🤖"):
-        with st.status("Processing your question...", expanded=True) as status:
-            st.write("🧠 Understanding your question...")
-
+        with st.spinner("Analyzing your question..."):
             try:
                 conn = get_database()
                 client = get_llm_client()
@@ -257,24 +255,12 @@ def _handle_question(question: str):
                     settings=settings,
                     conversation_history=st.session_state.conversation_history,
                 )
-
-                if result.sql:
-                    st.write("📝 Generated SQL query")
-                    st.code(result.sql, language="sql")
-
-                if result.success:
-                    st.write(f"✅ Query returned {result.rows_returned} rows in {result.query_time_ms}ms")
-                    status.update(label="Complete!", state="complete", expanded=False)
-                else:
-                    status.update(label="Error", state="error", expanded=False)
-
             except Exception as e:
                 result = QueryResult(
                     success=False,
                     question=question,
                     error=f"An unexpected error occurred: {e}",
                 )
-                status.update(label="Error", state="error", expanded=False)
 
         # Display results
         if result.success:
@@ -298,49 +284,70 @@ def _handle_question(question: str):
 
 
 def _render_success(result: QueryResult):
-    """Render a successful query result with explanation, table, and chart."""
-    # Explanation
+    """Render a successful query result: clear answer first, then table/chart."""
+    # 1. TEXT ANSWER — always first and prominent
     st.markdown(result.explanation)
 
-    # Chart
-    if result.data is not None and not result.data.empty:
-        fig = create_chart(result.data, result.chart_type, result.chart_config)
-        if fig:
-            st.plotly_chart(fig, width="stretch", config=CHART_CONFIG)
+    if result.data is None or result.data.empty:
+        return
 
-    # Data table
-    if result.data is not None and not result.data.empty:
-        with st.expander(f"📋 View Data ({result.rows_returned} rows)", expanded=result.chart_type == "table"):
-            st.dataframe(
-                result.data,
-                width="stretch",
-                hide_index=True,
-            )
+    df = result.data
 
-            # Download button
-            csv = result.data.to_csv(index=False)
-            st.download_button(
-                "⬇️ Download CSV",
-                csv,
-                "query_results.csv",
-                "text/csv",
-                use_container_width=True,
-            )
+    # 2. METRIC DISPLAY — for single-value answers, show big KPI cards
+    if result.chart_type == "metric" or (len(df) == 1 and len(df.columns) <= 4):
+        _render_metric_cards(df)
 
-    # SQL expander
-    if result.sql:
-        with st.expander("🔍 View SQL Query"):
-            st.code(result.sql, language="sql")
+    # 3. CHART/PLOT — visual answer
+    fig = create_chart(df, result.chart_type, result.chart_config)
+    if fig:
+        st.plotly_chart(fig, width="stretch", config=CHART_CONFIG)
 
-    # Query metadata
-    st.markdown(
-        f'<div class="query-meta">'
-        f'<span>⏱️ {result.query_time_ms}ms</span>'
-        f'<span>📊 {result.rows_returned} rows</span>'
-        f'<span>📈 {result.chart_type}</span>'
-        f'</div>',
-        unsafe_allow_html=True,
+    # 4. DATA TABLE — always show for transparency
+    show_table = result.chart_type == "table" or len(df) > 1
+    if show_table:
+        st.dataframe(
+            df,
+            width="stretch",
+            hide_index=True,
+        )
+
+    # 5. DOWNLOAD — CSV export
+    csv = df.to_csv(index=False)
+    st.download_button(
+        "⬇️ Download CSV",
+        csv,
+        "query_results.csv",
+        "text/csv",
+        use_container_width=True,
     )
+
+
+def _render_metric_cards(df: pd.DataFrame):
+    """Render single-row results as prominent metric cards."""
+    row = df.iloc[0]
+    numeric_cols = df.select_dtypes(include=["number"]).columns.tolist()
+
+    if not numeric_cols:
+        return
+
+    cols = st.columns(min(len(numeric_cols), 4))
+    for i, col_name in enumerate(numeric_cols[:4]):
+        value = row[col_name]
+        # Format the value nicely
+        if "rate" in col_name.lower() or "pct" in col_name.lower():
+            display = f"{value:.1f}%"
+        elif "charge" in col_name.lower() or "bill" in col_name.lower() or "cost" in col_name.lower():
+            display = f"${value:,.2f}"
+        elif isinstance(value, float) and value == int(value):
+            display = f"{int(value):,}"
+        elif isinstance(value, float):
+            display = f"{value:,.2f}"
+        else:
+            display = f"{value:,}"
+
+        # Clean up column name for label
+        label = col_name.replace("_", " ").title()
+        cols[i].metric(label, display)
 
 
 def _render_message(msg: dict):
