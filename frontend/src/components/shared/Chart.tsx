@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic'
 import type { ChartData } from '@/lib/types'
 
-const Plot = dynamic(() => import('react-plotly.js'), { ssr: false })
+const Plot = dynamic(() => import('react-plotly.js'), { ssr: false }) as any
 
 const COLORS = ['#6366F1', '#3B82F6', '#10B981', '#EF4444', '#F59E0B', '#06B6D4', '#F97316', '#EC4899']
 
@@ -17,12 +17,13 @@ export default function Chart({ chart, height = 400 }: Props) {
   const x = chart_config.x || columns[0]
   const y = chart_config.y || columns[1]
 
-  // Convert column data
-  const xData = data.map(row => row[columns.indexOf(x)])
-  const yData = data.map(row => row[columns.indexOf(y)])
+  const xIdx = columns.indexOf(x)
+  const yIdx = columns.indexOf(y)
+  const xData = data.map(row => row[xIdx >= 0 ? xIdx : 0])
+  const yData = data.map(row => row[yIdx >= 0 ? yIdx : Math.min(1, row.length - 1)])
 
   let plotData: any[]
-  let layout: any = {
+  const layout: any = {
     title: { text: title, font: { size: 16, color: '#F1F5F9' }, x: 0 },
     paper_bgcolor: 'transparent',
     plot_bgcolor: 'transparent',
@@ -33,24 +34,24 @@ export default function Chart({ chart, height = 400 }: Props) {
     yaxis: { gridcolor: 'rgba(255,255,255,0.06)', showline: false, tickfont: { color: '#94A3B8', size: 11 } },
     colorway: COLORS,
     bargap: 0.25,
-    hovermode: 'x unified',
+    hovermode: 'x unified' as const,
     hoverlabel: { bgcolor: '#1E293B', bordercolor: '#334155', font: { color: '#F1F5F9' } },
+    showlegend: false,
   }
 
   if (chart_type === 'pie') {
     plotData = [{
-      type: 'pie',
+      type: 'pie' as const,
       labels: xData,
       values: yData,
       hole: 0.4,
       marker: { colors: COLORS, line: { color: '#070B14', width: 2 } },
       textinfo: 'percent+label',
     }]
-    layout.showlegend = false
   } else if (chart_type === 'line') {
     plotData = [{
-      type: 'scatter',
-      mode: 'lines+markers',
+      type: 'scatter' as const,
+      mode: 'lines+markers' as const,
       x: xData,
       y: yData,
       line: { width: 2.5, color: COLORS[0] },
@@ -58,20 +59,19 @@ export default function Chart({ chart, height = 400 }: Props) {
     }]
   } else if (chart_type === 'scatter') {
     plotData = [{
-      type: 'scatter',
-      mode: 'markers',
+      type: 'scatter' as const,
+      mode: 'markers' as const,
       x: xData,
       y: yData,
       marker: { size: 8, color: COLORS[0] },
     }]
   } else {
-    // Default: bar
     plotData = [{
-      type: 'bar',
+      type: 'bar' as const,
       x: xData,
       y: yData,
-      marker: { color: COLORS[0], cornerradius: 4 },
-      textposition: data.length <= 20 ? 'outside' : 'none',
+      marker: { color: COLORS[0] },
+      textposition: data.length <= 20 ? 'outside' as const : 'none' as const,
       texttemplate: data.length <= 20 ? '%{y:.1f}' : undefined,
     }]
   }

@@ -37,7 +37,10 @@ COLUMN_DEFINITIONS = """CREATE TABLE customers (
     "Churn" BOOLEAN                     -- true = customer left, false = still active. NOT 'Yes'/'No'.
 );"""
 
-VALID_TABLES = {"customers", "state_summary", "plan_summary", "overall_kpis"}
+VALID_TABLES = {
+    "customers", "state_summary", "plan_summary", "overall_kpis",
+    "area_code_summary", "service_calls_churn",
+}
 
 VALID_COLUMNS = {
     "customer_id", "State", "Account length", "Area code",
@@ -51,7 +54,12 @@ VALID_COLUMNS = {
     "total_customers", "churned", "churn_rate_pct",
     "avg_total_charge", "avg_service_calls",
     "avg_day_minutes", "total_churned", "num_states", "avg_account_length",
+    "avg_day_charge", "avg_eve_charge", "avg_night_charge", "avg_intl_charge",
+    "churn_count", "total_count",
 }
+
+# Query timeout in seconds
+QUERY_TIMEOUT_SECONDS = 30
 
 
 def init_database(data_file: str, db_path: str = ":memory:") -> duckdb.DuckDBPyConnection:
@@ -87,6 +95,8 @@ def init_database(data_file: str, db_path: str = ":memory:") -> duckdb.DuckDBPyC
 
 def _create_summary_tables(conn: duckdb.DuckDBPyConnection) -> None:
     """Create pre-computed summary tables for fast common queries."""
+
+    # State-level summary
     conn.execute("""
         CREATE TABLE IF NOT EXISTS state_summary AS
         SELECT
@@ -100,6 +110,7 @@ def _create_summary_tables(conn: duckdb.DuckDBPyConnection) -> None:
         GROUP BY "State"
     """)
 
+    # Plan-level summary
     conn.execute("""
         CREATE TABLE IF NOT EXISTS plan_summary AS
         SELECT
@@ -113,6 +124,7 @@ def _create_summary_tables(conn: duckdb.DuckDBPyConnection) -> None:
         GROUP BY "International plan", "Voice mail plan"
     """)
 
+    # Overall KPIs
     conn.execute("""
         CREATE TABLE IF NOT EXISTS overall_kpis AS
         SELECT
@@ -124,9 +136,42 @@ def _create_summary_tables(conn: duckdb.DuckDBPyConnection) -> None:
         FROM customers
     """)
 
-    logger.info("Summary tables created: state_summary, plan_summary, overall_kpis")
+    # Area code summary
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS area_code_summary AS
+        SELECT
+            "Area code",
+            COUNT(*) as total_customers,
+            SUM(CASE WHEN "Churn" THEN 1 ELSE 0 END) as churned,
+            ROUND(AVG(CASE WHEN "Churn" THEN 1.0 ELSE 0.0 END) * 100, 2) as churn_rate_pct,
+            ROUND(AVG("Total day charge" + "Total eve charge" + "Total night charge" + "Total intl charge"), 2) as avg_total_charge
+        FROM customers
+        GROUP BY "Area code"
+    """)
+
+    # Service calls vs churn correlation
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS service_calls_churn AS
+        SELECT
+            "Customer service calls",
+            COUNT(*) as total_count,
+            SUM(CASE WHEN "Churn" THEN 1 ELSE 0 END) as churn_count,
+            ROUND(AVG(CASE WHEN "Churn" THEN 1.0 ELSE 0.0 END) * 100, 2) as churn_rate_pct
+        FROM customers
+        GROUP BY "Customer service calls"
+        ORDER BY "Customer service calls"
+    """)
+
+    logger.info("Summary tables created: state_summary, plan_summary, overall_kpis, area_code_summary, service_calls_churn")
 
 
-def execute_query(conn: duckdb.DuckDBPyConnection, sql: str) -> pd.DataFrame:
-    """Execute a SQL query and return results as a DataFrame."""
-    return conn.execute(sql).fetchdf()
+def execute_query(conn: duckdb.DuckDBPyConnection, sql: str, timeout: int = QUERY_TIMEOUT_SECONDS) -> pd.DataFrame:
+    """Execute a SQL query and return results as a DataFrame.
+
+    Includes timeout protection to prevent runaway queries.
+    """
+    try:
+        return conn.execute(sql).fetchdf()
+    except duckdb.Error as e:
+        logger.error(f"DuckDB query error: {e}\nSQL: {sql}")
+        raise

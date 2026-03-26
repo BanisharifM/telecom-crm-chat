@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
   Box, Typography, Grid, Card, MenuItem, Select, FormControl,
-  InputLabel, Button, Paper,
+  InputLabel, Button, Paper, SelectChangeEvent,
 } from '@mui/material'
 import DownloadIcon from '@mui/icons-material/Download'
 import { getFilters, getExplorerData } from '@/lib/api'

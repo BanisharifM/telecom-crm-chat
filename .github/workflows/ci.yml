@@ -2,38 +2,115 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, nextjs]
   pull_request:
-    branches: [main]
+    branches: [main, nextjs]
+
+env:
+  PYTHON_VERSION: "3.13"
+  NODE_VERSION: "20"
 
 jobs:
-  lint-and-test:
+  # ── Python Backend ──
+  lint-python:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+      - run: uv python install ${{ env.PYTHON_VERSION }}
+      - run: uv pip install --system ruff
+      - run: ruff check src/ tests/ backend/
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v4
-
-      - name: Set up Python
-        run: uv python install 3.13
-
-      - name: Install dependencies
-        run: uv pip install --system -r requirements.txt pytest pytest-cov ruff
-
-      - name: Lint
-        run: ruff check src/ tests/
-
-      - name: Run tests
-        run: PYTHONPATH=src pytest tests/ -v --tb=short
+  test-unit:
+    runs-on: ubuntu-latest
+    needs: lint-python
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+      - run: uv python install ${{ env.PYTHON_VERSION }}
+      - run: uv pip install --system -r requirements.txt pytest pytest-cov
+      - name: Run unit + integration tests
+        run: PYTHONPATH=src pytest tests/unit/ tests/integration/test_database.py -v --tb=short
         env:
           OPENROUTER_API_KEY: "test-key-not-used"
 
-  docker:
+  test-e2e:
     runs-on: ubuntu-latest
-    needs: lint-and-test
+    needs: test-unit
+    if: github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+      - run: uv python install ${{ env.PYTHON_VERSION }}
+      - run: uv pip install --system -r requirements.txt pytest
+      - name: Run E2E tests (live LLM)
+        run: PYTHONPATH=src pytest tests/integration/test_e2e_queries.py -v --tb=short -x
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
-      - name: Build Docker image
-        run: docker build -t telecom-crm-chat:${{ github.sha }} .
+  test-backend-api:
+    runs-on: ubuntu-latest
+    needs: test-unit
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+      - run: uv python install ${{ env.PYTHON_VERSION }}
+      - run: uv pip install --system -r requirements.txt pytest fastapi uvicorn httpx
+      - name: Test FastAPI endpoints
+        run: |
+          PYTHONPATH=src:. python -c "
+          from backend.main import app
+          from fastapi.testclient import TestClient
+          with TestClient(app) as client:
+              r = client.get('/api/health')
+              assert r.status_code == 200, f'Health failed: {r.text}'
+              assert r.json()['db_rows'] == 3333
+
+              r = client.get('/api/dashboard/kpis')
+              assert r.status_code == 200
+              assert r.json()['total_customers'] == 3333
+
+              r = client.get('/api/dashboard/insights')
+              assert r.status_code == 200
+              assert len(r.json()['insights']) >= 2
+
+              r = client.get('/api/dashboard/charts')
+              assert r.status_code == 200
+              assert len(r.json()['charts']) == 4
+
+              r = client.get('/api/explorer/filters')
+              assert r.status_code == 200
+              assert len(r.json()['states']) == 51
+
+              r = client.get('/api/explorer/data?page_size=10')
+              assert r.status_code == 200
+              assert r.json()['total_rows'] == 3333
+
+              print('ALL 6 BACKEND ENDPOINTS OK')
+          "
+        env:
+          OPENROUTER_API_KEY: "test-key-not-used"
+
+  # ── Next.js Frontend ──
+  build-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      - run: cd frontend && npm ci
+      - run: cd frontend && npm run build
+
+  # ── Docker ──
+  docker:
+    runs-on: ubuntu-latest
+    needs: [test-unit, build-frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build backend image
+        run: docker build -t crm-backend -f backend/Dockerfile .
+      - name: Build frontend image
+        run: docker build -t crm-frontend ./frontend

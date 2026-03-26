@@ -11,9 +11,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <head>
         <title>TelecomCo CRM Chat</title>
+        <meta name="description" content="AI-powered chat interface for telecom CRM data analytics" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+          rel="stylesheet"
+        />
       </head>
       <body style={{ margin: 0 }}>
         <ThemeProvider theme={theme}>
@@ -24,10 +28,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               component="main"
               sx={{
                 flexGrow: 1,
-                p: { xs: 2, sm: 3 },
+                p: { xs: 1.5, sm: 2, md: 3 },
                 maxWidth: 1200,
                 mx: 'auto',
                 width: '100%',
+                mt: { xs: '64px', md: 0 },
               }}
             >
               {children}
