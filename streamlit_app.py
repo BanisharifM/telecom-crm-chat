@@ -78,57 +78,58 @@ def get_kpis() -> dict:
 def get_auto_insights() -> list[str]:
     """Generate pre-computed data insights."""
     conn = get_database()
-
     insights = []
 
-    # Intl plan churn comparison
-    plan_df = conn.execute("""
-        SELECT "International plan", churn_rate_pct
-        FROM plan_summary
-        WHERE "Voice mail plan" IN ('Yes', 'No')
-        GROUP BY "International plan"
-        HAVING COUNT(*) > 0
-    """).fetchdf()
+    try:
+        # International plan churn comparison
+        intl_stats = conn.execute("""
+            SELECT "International plan",
+                   SUM(total_customers) as total,
+                   ROUND(SUM(total_customers * churn_rate_pct) / NULLIF(SUM(total_customers), 0), 1) as rate
+            FROM plan_summary
+            GROUP BY "International plan"
+            ORDER BY rate DESC
+        """).fetchdf()
 
-    # We can compute from the raw summary
-    intl_stats = conn.execute("""
-        SELECT "International plan",
-               SUM(total_customers) as total,
-               ROUND(SUM(total_customers * churn_rate_pct) / SUM(total_customers), 1) as rate
-        FROM plan_summary
-        GROUP BY "International plan"
-    """).fetchdf()
+        for _, row in intl_stats.iterrows():
+            label = "International" if row["International plan"] == "Yes" else "Non-international"
+            insights.append(
+                f"{label} plan holders: **{row['rate']}%** churn rate "
+                f"({int(row['total'])} customers)"
+            )
+    except Exception:
+        pass
 
-    for _, row in intl_stats.iterrows():
+    try:
+        # Service calls correlation
+        svc = conn.execute("""
+            SELECT
+                ROUND(AVG(CASE WHEN "Churn" THEN "Customer service calls" END), 1) as churned_avg,
+                ROUND(AVG(CASE WHEN NOT "Churn" THEN "Customer service calls" END), 1) as active_avg
+            FROM customers
+        """).fetchdf().iloc[0]
         insights.append(
-            f"{'International' if row['International plan'] == 'Yes' else 'Non-international'} "
-            f"plan holders: **{row['rate']}%** churn rate ({int(row['total'])} customers)"
+            f"Churned customers averaged **{svc['churned_avg']}** service calls "
+            f"vs **{svc['active_avg']}** for active customers"
         )
+    except Exception:
+        pass
 
-    # Service calls correlation
-    svc = conn.execute("""
-        SELECT
-            ROUND(AVG(CASE WHEN "Churn" THEN "Customer service calls" END), 1) as churned_avg,
-            ROUND(AVG(CASE WHEN NOT "Churn" THEN "Customer service calls" END), 1) as active_avg
-        FROM customers
-    """).fetchdf().iloc[0]
-    insights.append(
-        f"Churned customers averaged **{svc['churned_avg']}** service calls "
-        f"vs **{svc['active_avg']}** for active customers"
-    )
-
-    # Top churn state
-    top_state = conn.execute("""
-        SELECT "State", churn_rate_pct, total_customers
-        FROM state_summary
-        WHERE total_customers >= 30
-        ORDER BY churn_rate_pct DESC
-        LIMIT 1
-    """).fetchdf().iloc[0]
-    insights.append(
-        f"Highest churn state: **{top_state['State']}** "
-        f"at **{top_state['churn_rate_pct']}%** ({int(top_state['total_customers'])} customers)"
-    )
+    try:
+        # Top churn state
+        top_state = conn.execute("""
+            SELECT "State", churn_rate_pct, total_customers
+            FROM state_summary
+            WHERE total_customers >= 30
+            ORDER BY churn_rate_pct DESC
+            LIMIT 1
+        """).fetchdf().iloc[0]
+        insights.append(
+            f"Highest churn state: **{top_state['State']}** "
+            f"at **{top_state['churn_rate_pct']}%** ({int(top_state['total_customers'])} customers)"
+        )
+    except Exception:
+        pass
 
     return insights
 

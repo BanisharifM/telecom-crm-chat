@@ -74,7 +74,12 @@ On failure: retry up to 3x with error feedback to LLM
 ### Rule 1: Session Logging (MANDATORY)
 After **every** user message, append a new entry to the **top** of `SESSION_LOG.md` (below the header).
 
-### Rule 2: Session Start Protocol
+### Rule 2: Git Commits
+- NEVER add `Co-Authored-By` lines to commit messages
+- The only author is Mahdi BanisharifDehkordi — no AI attribution in git history
+- Keep commit messages clean and professional
+
+### Rule 3: Session Start Protocol
 At the start of each new session:
 1. Read `CLAUDE.md` (loaded automatically)
 2. Read `SESSION_LOG.md` to understand where we left off
