@@ -52,9 +52,8 @@ def get_database():
     return init_database(settings.data_file)
 
 
-@st.cache_resource
 def get_llm_client():
-    """Create Anthropic client (runs once)."""
+    """Create OpenRouter client. Not cached — reads fresh secrets each time."""
     settings = get_settings()
     return create_client(settings)
 

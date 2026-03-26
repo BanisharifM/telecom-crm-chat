@@ -14,16 +14,20 @@ load_dotenv(Path(__file__).parent.parent.parent.parent / ".env")
 
 def _get_api_key() -> str:
     """Get API key from environment, .env, or Streamlit secrets."""
+    # 1. Try environment variable (set via .env or system)
     key = os.environ.get("OPENROUTER_API_KEY", "")
     if key:
         return key
-    # Try Streamlit secrets (for Streamlit Cloud deployment)
+
+    # 2. Try Streamlit secrets (for Streamlit Cloud deployment)
     try:
         import streamlit as st
-
-        return st.secrets.get("OPENROUTER_API_KEY", "")
+        if hasattr(st, "secrets") and "OPENROUTER_API_KEY" in st.secrets:
+            return str(st.secrets["OPENROUTER_API_KEY"])
     except Exception:
-        return ""
+        pass
+
+    return ""
 
 
 @dataclass(frozen=True)
@@ -51,5 +55,5 @@ class Settings:
 
 
 def get_settings() -> Settings:
-    """Get application settings."""
+    """Get application settings. Creates a new instance each time to pick up secrets."""
     return Settings()
