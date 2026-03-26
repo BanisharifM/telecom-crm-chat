@@ -135,12 +135,12 @@ EXAMPLE_QUESTIONS = [
 # ═══════════════════════════════════════════════════════
 
 with st.sidebar:
-    # Logo / Brand
+    # Brand
     st.markdown(
-        '<div style="text-align:center; padding: 8px 0 4px;">'
-        '<span style="font-size:2rem;">📱</span><br>'
-        '<span style="font-size:1.1rem; font-weight:700; color:#F1F5F9; letter-spacing:-0.02em;">TelecomCo CRM</span><br>'
-        '<span style="font-size:0.72rem; color:#64748B; text-transform:uppercase; letter-spacing:0.1em;">AI Data Assistant</span>'
+        '<div class="sidebar-brand">'
+        '<div class="sidebar-brand-icon">📱</div>'
+        '<div class="sidebar-brand-name">TelecomCo CRM</div>'
+        '<div class="sidebar-brand-sub">AI Data Assistant</div>'
         '</div>',
         unsafe_allow_html=True,
     )
@@ -157,10 +157,7 @@ with st.sidebar:
     # KPIs
     try:
         kpis = get_kpis()
-        st.markdown(
-            '<span style="font-size:0.7rem; color:#475569; text-transform:uppercase; letter-spacing:0.1em; font-weight:600;">Dataset Overview</span>',
-            unsafe_allow_html=True,
-        )
+        st.markdown('<div class="sidebar-section-label">Dataset Overview</div>', unsafe_allow_html=True)
         c1, c2 = st.columns(2)
         c1.metric("Customers", f"{kpis['total_customers']:,}")
         c2.metric("Churned", f"{kpis['total_churned']:,}")
@@ -172,10 +169,7 @@ with st.sidebar:
     # Example questions (only on chat page)
     if page == "💬 Chat":
         st.divider()
-        st.markdown(
-            '<span style="font-size:0.7rem; color:#475569; text-transform:uppercase; letter-spacing:0.1em; font-weight:600;">Quick Questions</span>',
-            unsafe_allow_html=True,
-        )
+        st.markdown('<div class="sidebar-section-label">Quick Questions</div>', unsafe_allow_html=True)
         for q in EXAMPLE_QUESTIONS:
             if st.button(q, key=f"ex_{q}", use_container_width=True):
                 st.session_state.pending_question = q
@@ -184,10 +178,8 @@ with st.sidebar:
     # Footer
     st.divider()
     st.markdown(
-        '<div style="text-align:center; font-size:0.68rem; color:#475569; line-height:1.6;">'
-        'Powered by <strong style="color:#7C3AED;">Claude</strong> + '
-        '<strong style="color:#F59E0B;">DuckDB</strong> + '
-        '<strong style="color:#3B82F6;">Plotly</strong><br>'
+        '<div class="sidebar-footer">'
+        'Powered by <strong>Claude</strong> · DuckDB · Plotly<br>'
         'Built by Mahdi BanisharifDehkordi'
         '</div>',
         unsafe_allow_html=True,

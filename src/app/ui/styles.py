@@ -1,11 +1,10 @@
 """Custom CSS styles for the Streamlit application.
 
-Professional dark CRM theme with:
-- Inter font family
-- Responsive design (mobile/tablet/desktop)
-- Polished metric cards, chat bubbles, buttons
-- Sidebar navigation styling
-- Clean scrollbars and transitions
+Professional CRM dashboard theme with:
+- Responsive design (mobile / tablet / desktop)
+- Sidebar: fixed on desktop, collapsible on mobile with visible toggle
+- Polished metric cards, chat interface, buttons
+- Dark theme optimized for data visualization
 """
 
 CUSTOM_CSS = """
@@ -13,129 +12,145 @@ CUSTOM_CSS = """
     /* ════════════════════════════════════════════
        FONTS
     ════════════════════════════════════════════ */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
     html, body, [class*="css"] {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
     }
 
     /* ════════════════════════════════════════════
-       HIDE STREAMLIT CHROME
+       STREAMLIT CHROME — Selective hiding
+       Keep header functional for sidebar toggle
     ════════════════════════════════════════════ */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    header {visibility: hidden !important;}
-
-    /* ════════════════════════════════════════════
-       LAYOUT
-    ════════════════════════════════════════════ */
-    .main .block-container {
-        padding-top: 1.2rem;
-        padding-bottom: 1rem;
-        max-width: 1200px;
+    [data-testid="stDecoration"] {display: none;}
+    header[data-testid="stHeader"] {
+        background: transparent !important;
+        border: none !important;
     }
 
     /* ════════════════════════════════════════════
        SIDEBAR
     ════════════════════════════════════════════ */
     [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #0B1120 0%, #162036 100%);
-        border-right: 1px solid #1E293B;
+        background: linear-gradient(180deg, #070B14 0%, #0F1629 50%, #131B2E 100%);
+        border-right: 1px solid rgba(30, 41, 59, 0.5);
     }
     [data-testid="stSidebar"] [data-testid="stMarkdown"] p {
-        color: #CBD5E1;
+        color: #94A3B8;
+        font-size: 0.88rem;
     }
-    /* Sidebar nav radio buttons */
-    [data-testid="stSidebar"] .stRadio > label {
-        color: #94A3B8 !important;
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
+
+    /* Desktop: sidebar always open, hide collapse button */
+    @media (min-width: 769px) {
+        [data-testid="stSidebarCollapseButton"] {
+            display: none !important;
+        }
+        [data-testid="stSidebar"] {
+            min-width: 300px !important;
+        }
     }
-    [data-testid="stSidebar"] .stRadio [role="radiogroup"] label {
-        padding: 8px 12px !important;
-        border-radius: 8px;
-        transition: all 0.15s ease;
+
+    /* Mobile/Tablet: styled toggle button */
+    @media (max-width: 768px) {
+        [data-testid="stSidebarCollapseButton"] {
+            visibility: visible !important;
+            z-index: 999999 !important;
+        }
+        [data-testid="stSidebarCollapseButton"] button {
+            background: rgba(99, 102, 241, 0.9) !important;
+            border: none !important;
+            border-radius: 10px !important;
+            color: #FFFFFF !important;
+            width: 40px !important;
+            height: 40px !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+        }
+        [data-testid="stSidebarCollapseButton"] button:hover {
+            background: rgba(99, 102, 241, 1) !important;
+            transform: scale(1.05);
+        }
     }
-    [data-testid="stSidebar"] .stRadio [role="radiogroup"] label:hover {
-        background: rgba(124, 58, 237, 0.1);
-    }
-    [data-testid="stSidebar"] .stRadio [role="radiogroup"] label[data-checked="true"] {
-        background: rgba(124, 58, 237, 0.15);
-        border: 1px solid rgba(124, 58, 237, 0.3);
+
+    /* ════════════════════════════════════════════
+       LAYOUT
+    ════════════════════════════════════════════ */
+    .main .block-container {
+        padding-top: 1.5rem;
+        padding-bottom: 1.5rem;
+        max-width: 1200px;
     }
 
     /* ════════════════════════════════════════════
        KPI METRIC CARDS
     ════════════════════════════════════════════ */
     [data-testid="stMetric"] {
-        background: linear-gradient(135deg, #1A2332 0%, #111827 100%);
-        border: 1px solid #1E293B;
+        background: linear-gradient(145deg, #111827 0%, #0D1321 100%);
+        border: 1px solid rgba(30, 41, 59, 0.7);
         border-radius: 14px;
         padding: 18px 20px;
-        transition: all 0.2s ease;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        transition: all 0.25s ease;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
     }
     [data-testid="stMetric"]:hover {
-        border-color: #7C3AED;
-        box-shadow: 0 4px 16px rgba(124, 58, 237, 0.12);
-        transform: translateY(-1px);
+        border-color: rgba(99, 102, 241, 0.5);
+        box-shadow: 0 4px 20px rgba(99, 102, 241, 0.1);
+        transform: translateY(-2px);
     }
     [data-testid="stMetric"] label {
         color: #64748B !important;
-        font-size: 0.72rem !important;
+        font-size: 0.7rem !important;
         font-weight: 600 !important;
         text-transform: uppercase;
-        letter-spacing: 0.06em;
+        letter-spacing: 0.08em;
     }
     [data-testid="stMetric"] [data-testid="stMetricValue"] {
-        font-size: 1.7rem !important;
-        font-weight: 700 !important;
+        font-size: 1.65rem !important;
+        font-weight: 800 !important;
         color: #F1F5F9 !important;
-        letter-spacing: -0.02em;
+        letter-spacing: -0.03em;
     }
     [data-testid="stMetric"] [data-testid="stMetricDelta"] {
-        font-size: 0.8rem !important;
+        font-size: 0.78rem !important;
     }
 
     /* ════════════════════════════════════════════
        CHAT INTERFACE
     ════════════════════════════════════════════ */
-    /* Chat messages */
     [data-testid="stChatMessage"] {
-        border-radius: 14px;
-        border: 1px solid rgba(30, 41, 59, 0.6);
-        margin-bottom: 12px;
-        padding: 14px 18px;
-        backdrop-filter: blur(8px);
+        border-radius: 16px;
+        margin-bottom: 14px;
+        padding: 16px 20px;
+        border: 1px solid rgba(30, 41, 59, 0.4);
     }
-    /* User message accent */
+    /* User bubble */
     [data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(59, 130, 246, 0.03));
         border-left: 3px solid #3B82F6;
-        background: rgba(59, 130, 246, 0.04);
     }
-    /* Bot message accent */
+    /* Bot bubble */
     [data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
-        border-left: 3px solid #7C3AED;
-        background: rgba(124, 58, 237, 0.04);
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.06), rgba(99, 102, 241, 0.02));
+        border-left: 3px solid #6366F1;
     }
 
     /* Chat input */
     [data-testid="stChatInput"] {
-        border-top: 1px solid #1E293B;
-        padding-top: 12px;
+        border-top: 1px solid rgba(30, 41, 59, 0.4);
+        padding-top: 14px;
     }
     [data-testid="stChatInput"] textarea {
         border-radius: 14px !important;
-        border: 1.5px solid #334155 !important;
-        background: #131B2E !important;
-        padding: 12px 16px !important;
+        border: 1.5px solid rgba(51, 65, 85, 0.6) !important;
+        background: #0C1120 !important;
+        padding: 12px 18px !important;
         font-size: 0.95rem !important;
         transition: all 0.2s ease !important;
     }
     [data-testid="stChatInput"] textarea:focus {
-        border-color: #7C3AED !important;
-        box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15) !important;
+        border-color: #6366F1 !important;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15) !important;
     }
     [data-testid="stChatInput"] textarea::placeholder {
         color: #475569 !important;
@@ -149,28 +164,29 @@ CUSTOM_CSS = """
         font-weight: 500;
         font-size: 0.82rem;
         transition: all 0.2s ease;
-        border: 1px solid #1E293B;
-        background: linear-gradient(135deg, #1A2332, #131B2E);
-        color: #CBD5E1;
-        padding: 6px 14px;
+        border: 1px solid rgba(30, 41, 59, 0.7);
+        background: linear-gradient(145deg, #111827, #0D1321);
+        color: #94A3B8;
+        padding: 8px 14px;
+        line-height: 1.4;
+        text-align: left;
     }
     .stButton > button:hover {
-        border-color: #7C3AED;
-        background: linear-gradient(135deg, #1E293B, #1A2332);
-        color: #F1F5F9;
-        box-shadow: 0 2px 8px rgba(124, 58, 237, 0.15);
+        border-color: #6366F1;
+        color: #E2E8F0;
+        box-shadow: 0 2px 12px rgba(99, 102, 241, 0.12);
+        transform: translateY(-1px);
     }
     .stButton > button:active {
         transform: scale(0.98);
     }
-
-    /* Download button */
     .stDownloadButton > button {
         border-radius: 10px;
         font-weight: 500;
-        border: 1px solid #1E293B;
-        background: linear-gradient(135deg, #1A2332, #131B2E);
-        color: #CBD5E1;
+        border: 1px solid rgba(30, 41, 59, 0.7);
+        background: linear-gradient(145deg, #111827, #0D1321);
+        color: #94A3B8;
+        transition: all 0.2s ease;
     }
     .stDownloadButton > button:hover {
         border-color: #10B981;
@@ -178,25 +194,12 @@ CUSTOM_CSS = """
     }
 
     /* ════════════════════════════════════════════
-       DATAFRAME / TABLES
+       DATA TABLES
     ════════════════════════════════════════════ */
     [data-testid="stDataFrame"] {
         border-radius: 12px;
         overflow: hidden;
-        border: 1px solid #1E293B;
-    }
-
-    /* ════════════════════════════════════════════
-       EXPANDERS
-    ════════════════════════════════════════════ */
-    [data-testid="stExpander"] {
-        border: 1px solid #1E293B;
-        border-radius: 10px;
-        background: rgba(20, 27, 46, 0.4);
-    }
-    [data-testid="stExpander"] summary {
-        font-size: 0.85rem;
-        color: #94A3B8;
+        border: 1px solid rgba(30, 41, 59, 0.5);
     }
 
     /* ════════════════════════════════════════════
@@ -205,13 +208,20 @@ CUSTOM_CSS = """
     .stSelectbox [data-baseweb="select"] {
         border-radius: 10px !important;
     }
+    .stSelectbox label, .stRadio label {
+        color: #64748B !important;
+        font-size: 0.7rem !important;
+        font-weight: 600 !important;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+    }
 
     /* ════════════════════════════════════════════
        DIVIDERS
     ════════════════════════════════════════════ */
     hr {
-        border-color: rgba(30, 41, 59, 0.6) !important;
-        margin: 0.8rem 0 !important;
+        border-color: rgba(30, 41, 59, 0.4) !important;
+        margin: 1rem 0 !important;
     }
 
     /* ════════════════════════════════════════════
@@ -223,46 +233,81 @@ CUSTOM_CSS = """
     ::-webkit-scrollbar-thumb:hover { background: #475569; }
 
     /* ════════════════════════════════════════════
-       WELCOME HERO
+       CUSTOM COMPONENTS
     ════════════════════════════════════════════ */
+    /* Hero heading */
     .hero-title {
-        font-size: 1.6rem;
-        font-weight: 700;
+        font-size: 1.5rem;
+        font-weight: 800;
         color: #F1F5F9;
-        margin-bottom: 4px;
-        letter-spacing: -0.02em;
+        margin-bottom: 2px;
+        letter-spacing: -0.03em;
     }
     .hero-subtitle {
-        font-size: 0.9rem;
-        color: #64748B;
-        margin-bottom: 16px;
-    }
-
-    /* ════════════════════════════════════════════
-       INSIGHT CARDS (Dashboard)
-    ════════════════════════════════════════════ */
-    .insight-card {
-        background: linear-gradient(135deg, #1A2332, #111827);
-        border: 1px solid #1E293B;
-        border-radius: 12px;
-        padding: 14px 18px;
-        margin-bottom: 8px;
         font-size: 0.88rem;
-        color: #CBD5E1;
+        color: #64748B;
+        margin-bottom: 20px;
         line-height: 1.5;
     }
+
+    /* Insight cards on dashboard */
+    .insight-card {
+        background: linear-gradient(145deg, #111827, #0D1321);
+        border: 1px solid rgba(30, 41, 59, 0.5);
+        border-left: 3px solid #6366F1;
+        border-radius: 12px;
+        padding: 14px 18px;
+        margin-bottom: 10px;
+        font-size: 0.88rem;
+        color: #CBD5E1;
+        line-height: 1.6;
+    }
     .insight-card strong {
-        color: #7C3AED;
+        color: #818CF8;
     }
 
+    /* Brand in sidebar */
+    .sidebar-brand {
+        text-align: center;
+        padding: 12px 0 8px;
+    }
+    .sidebar-brand-icon { font-size: 2.2rem; }
+    .sidebar-brand-name {
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: #F1F5F9;
+        letter-spacing: -0.02em;
+        margin-top: 2px;
+    }
+    .sidebar-brand-sub {
+        font-size: 0.65rem;
+        color: #475569;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        margin-top: 2px;
+    }
+    .sidebar-section-label {
+        font-size: 0.65rem;
+        color: #475569;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        font-weight: 700;
+        margin-bottom: 6px;
+    }
+    .sidebar-footer {
+        text-align: center;
+        font-size: 0.68rem;
+        color: #334155;
+        line-height: 1.7;
+    }
+    .sidebar-footer strong { color: #6366F1; }
+
     /* ════════════════════════════════════════════
-       RESPONSIVE — MOBILE (<768px)
+       RESPONSIVE — TABLET (≤768px)
     ════════════════════════════════════════════ */
     @media (max-width: 768px) {
         .main .block-container {
-            padding-top: 0.8rem;
-            padding-left: 0.8rem !important;
-            padding-right: 0.8rem !important;
+            padding: 1rem 0.8rem !important;
         }
         [data-testid="stMetric"] {
             padding: 12px 14px;
@@ -270,52 +315,32 @@ CUSTOM_CSS = """
         [data-testid="stMetric"] [data-testid="stMetricValue"] {
             font-size: 1.3rem !important;
         }
-        [data-testid="stMetric"] label {
-            font-size: 0.65rem !important;
-        }
-        .hero-title {
-            font-size: 1.2rem;
-        }
-        /* Stack columns on mobile */
-        [data-testid="stHorizontalBlock"] {
-            flex-wrap: wrap;
-        }
-        [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {
-            min-width: 45% !important;
-        }
+        .hero-title { font-size: 1.25rem; }
     }
 
     /* ════════════════════════════════════════════
-       RESPONSIVE — SMALL PHONE (<480px)
+       RESPONSIVE — MOBILE (≤480px)
     ════════════════════════════════════════════ */
     @media (max-width: 480px) {
         .main .block-container {
-            padding-left: 0.5rem !important;
-            padding-right: 0.5rem !important;
+            padding: 0.6rem 0.5rem !important;
         }
         [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {
-            min-width: 100% !important;
+            min-width: 48% !important;
         }
         [data-testid="stMetric"] [data-testid="stMetricValue"] {
             font-size: 1.1rem !important;
         }
-        h1 { font-size: 1.3rem !important; }
-        h2 { font-size: 1.1rem !important; }
-        h3 { font-size: 1rem !important; }
-    }
-
-    /* ════════════════════════════════════════════
-       SPINNER
-    ════════════════════════════════════════════ */
-    .stSpinner > div {
-        border-top-color: #7C3AED !important;
-    }
-
-    /* ════════════════════════════════════════════
-       TOOLTIP
-    ════════════════════════════════════════════ */
-    [data-baseweb="tooltip"] {
-        border-radius: 8px !important;
+        [data-testid="stMetric"] label {
+            font-size: 0.6rem !important;
+        }
+        .hero-title { font-size: 1.1rem; }
+        .hero-subtitle { font-size: 0.8rem; }
+        h1 { font-size: 1.2rem !important; }
+        h2 { font-size: 1rem !important; }
+        [data-testid="stChatMessage"] {
+            padding: 10px 12px;
+        }
     }
 </style>
 """
