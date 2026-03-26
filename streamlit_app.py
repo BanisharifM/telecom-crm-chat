@@ -307,14 +307,14 @@ def _render_success(result: QueryResult):
     if result.data is not None and not result.data.empty:
         fig = create_chart(result.data, result.chart_type, result.chart_config)
         if fig:
-            st.plotly_chart(fig, use_container_width=True, config=CHART_CONFIG)
+            st.plotly_chart(fig, width="stretch", config=CHART_CONFIG)
 
     # Data table
     if result.data is not None and not result.data.empty:
         with st.expander(f"📋 View Data ({result.rows_returned} rows)", expanded=result.chart_type == "table"):
             st.dataframe(
                 result.data,
-                use_container_width=True,
+                width="stretch",
                 hide_index=True,
             )
 
@@ -415,7 +415,7 @@ def render_dashboard_page():
             "title": "Top 15 States by Churn Rate (%)"
         })
         if fig:
-            st.plotly_chart(fig, use_container_width=True, config=CHART_CONFIG)
+            st.plotly_chart(fig, width="stretch", config=CHART_CONFIG)
 
     with col_right:
         # Churn by international plan
@@ -432,7 +432,7 @@ def render_dashboard_page():
             "title": "Churn Rate by International Plan"
         })
         if fig:
-            st.plotly_chart(fig, use_container_width=True, config=CHART_CONFIG)
+            st.plotly_chart(fig, width="stretch", config=CHART_CONFIG)
 
     col_left2, col_right2 = st.columns(2)
 
@@ -449,7 +449,7 @@ def render_dashboard_page():
             "title": "Distribution of Customer Service Calls"
         })
         if fig:
-            st.plotly_chart(fig, use_container_width=True, config=CHART_CONFIG)
+            st.plotly_chart(fig, width="stretch", config=CHART_CONFIG)
 
     with col_right2:
         # Churn pie chart
@@ -465,7 +465,7 @@ def render_dashboard_page():
             "title": "Customer Churn Distribution"
         })
         if fig:
-            st.plotly_chart(fig, use_container_width=True, config=CHART_CONFIG)
+            st.plotly_chart(fig, width="stretch", config=CHART_CONFIG)
 
 
 # ═══════════════════════════════════════════════════════
@@ -532,7 +532,7 @@ def render_data_explorer_page():
     # Data table
     st.dataframe(
         df,
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
         height=500,
         column_config={
