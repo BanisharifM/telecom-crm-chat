@@ -2,10 +2,10 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import {
-  MessageSquare, LayoutDashboard, Table2, Menu, X,
-  Plus, LogOut, Pin,
+  LayoutDashboard, Table2, Menu, X, SquarePen,
+  LogOut, Pin, Search, Settings,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -13,9 +13,8 @@ import { ThemeToggle } from './ThemeToggle'
 import { cn } from '@/lib/utils'
 
 const NAV_ITEMS = [
-  { label: 'Chat', icon: MessageSquare, href: '/chat' },
   { label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
-  { label: 'Explorer', icon: Table2, href: '/explorer' },
+  { label: 'Data Explorer', icon: Table2, href: '/explorer' },
 ]
 
 interface Props {
@@ -27,23 +26,55 @@ interface Props {
 
 export function AppSidebar({ user, conversations = [], onNewChat, onSignOut }: Props) {
   const pathname = usePathname()
+  const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+
+  const filteredConversations = conversations.filter(c =>
+    c.title.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
+  const pinnedConvos = filteredConversations.filter(c => c.pinned)
+  const recentConvos = filteredConversations.filter(c => !c.pinned)
+
+  const handleNewChat = () => {
+    onNewChat?.()
+    setMobileOpen(false)
+  }
 
   const sidebar = (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
-      {/* Brand - dark badge logo works on dark sidebar in both themes */}
-      <div className="px-3 py-3 flex justify-center">
-        <img
-          src="/logo-dark.png"
-          alt="TelecomCo"
-          className="w-full max-w-[240px] h-auto object-contain rounded-lg"
-        />
+      {/* Brand */}
+      <div className="px-3 pt-3 pb-1 flex justify-center">
+        <Link href="/">
+          <img
+            src="/logo-dark.png"
+            alt="TelecomCo"
+            className="w-full max-w-[200px] h-auto object-contain rounded-lg"
+          />
+        </Link>
       </div>
 
-      <Separator className="bg-white/10" />
+      {/* New Chat button */}
+      <div className="px-3 pt-3 pb-1">
+        <Button
+          onClick={handleNewChat}
+          className="w-full justify-start gap-2 bg-sidebar-accent/15 text-sidebar-accent border border-sidebar-accent/30 hover:bg-sidebar-accent/25 hover:text-white transition-all"
+          variant="outline"
+          size="sm"
+        >
+          <SquarePen className="h-4 w-4" />
+          New Chat
+        </Button>
+      </div>
+
+      <Separator className="bg-white/10 my-2 mx-3" />
 
       {/* Navigation */}
-      <nav className="p-3 space-y-1">
+      <nav className="px-3 space-y-0.5">
+        <div className="text-[10px] uppercase tracking-[0.1em] font-bold text-sidebar-foreground/40 px-3 mb-1">
+          Navigation
+        </div>
         {NAV_ITEMS.map(item => {
           const active = pathname.startsWith(item.href)
           return (
@@ -52,7 +83,7 @@ export function AppSidebar({ user, conversations = [], onNewChat, onSignOut }: P
               href={item.href}
               onClick={() => setMobileOpen(false)}
               className={cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                 active
                   ? 'bg-sidebar-accent/15 text-white border border-sidebar-accent/30'
                   : 'text-sidebar-foreground hover:bg-white/5 hover:text-white'
@@ -65,69 +96,114 @@ export function AppSidebar({ user, conversations = [], onNewChat, onSignOut }: P
         })}
       </nav>
 
-      <Separator className="bg-white/10" />
+      <Separator className="bg-white/10 my-2 mx-3" />
 
-      {/* Chat History (visible on chat page) */}
-      {pathname.startsWith('/chat') && (
-        <div className="flex-1 overflow-y-auto p-3">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] uppercase tracking-[0.1em] font-bold text-sidebar-foreground/50">
-              Conversations
-            </span>
-            <Button variant="ghost" size="icon" className="h-7 w-7 text-sidebar-foreground/50 hover:text-white" onClick={onNewChat}>
-              <Plus className="h-3.5 w-3.5" />
-            </Button>
-          </div>
-          <div className="space-y-0.5">
-            {conversations.map(conv => (
-              <Link
+      {/* Conversations */}
+      <div className="flex-1 overflow-y-auto px-3">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-[10px] uppercase tracking-[0.1em] font-bold text-sidebar-foreground/40 px-3">
+            Chats
+          </span>
+        </div>
+
+        {/* Search */}
+        <div className="relative mb-2">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-sidebar-foreground/30" />
+          <input
+            type="text"
+            placeholder="Search chats..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className="w-full bg-white/5 border border-white/10 rounded-lg pl-8 pr-3 py-1.5 text-xs text-sidebar-foreground placeholder:text-sidebar-foreground/30 focus:outline-none focus:border-sidebar-accent/40"
+          />
+        </div>
+
+        {/* Pinned */}
+        {pinnedConvos.length > 0 && (
+          <div className="mb-2">
+            <div className="text-[9px] uppercase tracking-wider text-sidebar-foreground/30 px-3 mb-1">Pinned</div>
+            {pinnedConvos.map(conv => (
+              <ConversationItem
                 key={conv.id}
-                href={`/chat/${conv.id}`}
-                onClick={() => setMobileOpen(false)}
-                className={cn(
-                  'flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors truncate',
-                  pathname === `/chat/${conv.id}`
-                    ? 'bg-white/10 text-white'
-                    : 'text-sidebar-foreground hover:bg-white/5 hover:text-white'
-                )}
-              >
-                {conv.pinned && <Pin className="h-3 w-3 shrink-0 text-sidebar-accent" />}
-                <span className="truncate">{conv.title}</span>
-              </Link>
+                conv={conv}
+                active={pathname === `/chat/${conv.id}`}
+                onClick={() => { router.push(`/chat/${conv.id}`); setMobileOpen(false) }}
+              />
             ))}
           </div>
-        </div>
-      )}
+        )}
 
-      {!pathname.startsWith('/chat') && <div className="flex-1" />}
+        {/* Recent */}
+        {recentConvos.length > 0 && (
+          <div>
+            <div className="text-[9px] uppercase tracking-wider text-sidebar-foreground/30 px-3 mb-1">Recent</div>
+            {recentConvos.map(conv => (
+              <ConversationItem
+                key={conv.id}
+                conv={conv}
+                active={pathname === `/chat/${conv.id}`}
+                onClick={() => { router.push(`/chat/${conv.id}`); setMobileOpen(false) }}
+              />
+            ))}
+          </div>
+        )}
 
-      <Separator className="bg-white/10" />
+        {filteredConversations.length === 0 && (
+          <div className="text-center py-6 text-xs text-sidebar-foreground/30">
+            {searchQuery ? 'No chats found' : 'No conversations yet'}
+          </div>
+        )}
+      </div>
 
-      {/* Footer */}
+      <Separator className="bg-white/10 mx-3" />
+
+      {/* User + Settings */}
       <div className="p-3 space-y-2">
-        {user && (
-          <div className="flex items-center gap-2 px-2">
+        {user ? (
+          <div className="flex items-center gap-2.5 px-2">
             {user.image ? (
-              <img src={user.image} alt="" className="h-7 w-7 rounded-full" />
+              <img src={user.image} alt="" className="h-8 w-8 rounded-full shrink-0" />
             ) : (
-              <div className="h-7 w-7 rounded-full bg-sidebar-accent/20 flex items-center justify-center text-xs font-bold text-white">
+              <div className="h-8 w-8 rounded-full bg-sidebar-accent/20 flex items-center justify-center text-xs font-bold text-white shrink-0">
                 {(user.name || user.email || '?')[0].toUpperCase()}
               </div>
             )}
             <div className="flex-1 min-w-0">
               <div className="text-xs font-medium text-white truncate">{user.name || 'User'}</div>
-              <div className="text-[10px] text-sidebar-foreground/50 truncate">{user.email}</div>
+              <div className="text-[10px] text-sidebar-foreground/40 truncate">{user.email}</div>
             </div>
-            <Button variant="ghost" size="icon" className="h-7 w-7 text-sidebar-foreground/50 hover:text-white" onClick={onSignOut}>
-              <LogOut className="h-3.5 w-3.5" />
-            </Button>
           </div>
+        ) : (
+          <Link
+            href="/login"
+            onClick={() => setMobileOpen(false)}
+            className="flex items-center justify-center gap-2 w-full px-3 py-2 text-sm font-medium text-sidebar-accent border border-sidebar-accent/30 rounded-lg hover:bg-sidebar-accent/10 transition-colors"
+          >
+            Log In
+          </Link>
         )}
+
+        {/* Action row */}
         <div className="flex items-center justify-between px-2">
-          <span className="text-[10px] text-sidebar-foreground/30">
-            Built by Mahdi BanisharifDehkordi
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-sidebar-foreground/40 hover:text-white">
+              <Settings className="h-3.5 w-3.5" />
+            </Button>
+            <ThemeToggle />
+            {user && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-sidebar-foreground/40 hover:text-white"
+                onClick={onSignOut}
+              >
+                <LogOut className="h-3.5 w-3.5" />
+              </Button>
+            )}
+          </div>
+          <span className="text-[9px] text-sidebar-foreground/20">
+            by Mahdi B.
           </span>
-          <ThemeToggle />
         </div>
       </div>
     </div>
@@ -162,5 +238,26 @@ export function AppSidebar({ user, conversations = [], onNewChat, onSignOut }: P
         {sidebar}
       </aside>
     </>
+  )
+}
+
+function ConversationItem({ conv, active, onClick }: {
+  conv: { id: string; title: string; pinned: boolean }
+  active: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        'w-full flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-left transition-colors truncate',
+        active
+          ? 'bg-white/10 text-white'
+          : 'text-sidebar-foreground hover:bg-white/5 hover:text-white'
+      )}
+    >
+      {conv.pinned && <Pin className="h-3 w-3 shrink-0 text-sidebar-accent" />}
+      <span className="truncate">{conv.title}</span>
+    </button>
   )
 }
