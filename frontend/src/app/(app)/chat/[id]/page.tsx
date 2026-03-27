@@ -17,6 +17,7 @@ import { ScrollToBottom } from '@/components/chat/ScrollToBottom'
 import { MessageActions } from '@/components/chat/MessageActions'
 import { InfoPanel } from '@/components/chat/InfoPanel'
 import { ChatInput } from '@/components/chat/ChatInput'
+import { SuggestedFollowups, generateFollowups } from '@/components/chat/SuggestedFollowups'
 
 const fetcher = (url: string) => fetch(url).then(r => r.json())
 
@@ -212,7 +213,12 @@ export default function ConversationPage() {
             {msg.createdAt && shouldShowDateSeparator(msg.createdAt, messages[i - 1]?.createdAt) && (
               <DateSeparator date={msg.createdAt} />
             )}
-            <MessageBubble msg={msg} onDownloadCSV={() => downloadCSV(msg)} />
+            <MessageBubble
+              msg={msg}
+              onDownloadCSV={() => downloadCSV(msg)}
+              onFollowup={handleSend}
+              isLast={i === messages.length - 1}
+            />
           </div>
         ))}
 
@@ -312,7 +318,7 @@ function downloadChartImage(msgId: string, title: string) {
   }
 }
 
-function MessageBubble({ msg, onDownloadCSV }: { msg: DisplayMessage; onDownloadCSV: () => void }) {
+function MessageBubble({ msg, onDownloadCSV, onFollowup, isLast }: { msg: DisplayMessage; onDownloadCSV: () => void; onFollowup?: (q: string) => void; isLast?: boolean }) {
   return (
     <div className={cn('max-w-3xl animate-fade-in', msg.role === 'user' ? 'ml-auto' : '')}>
       <div className={cn('text-[10px] uppercase tracking-wider font-bold mb-1', msg.role === 'user' ? 'text-right text-muted-foreground' : 'text-primary')}>
@@ -400,6 +406,13 @@ function MessageBubble({ msg, onDownloadCSV }: { msg: DisplayMessage; onDownload
       </div>
       {/* Action buttons below the bubble (Claude pattern) */}
       <MessageActions content={msg.content} messageId={msg.id} role={msg.role} />
+      {/* Follow-up suggestions (only on last assistant message) */}
+      {isLast && msg.role === 'assistant' && onFollowup && msg.sqlQuery && (
+        <SuggestedFollowups
+          suggestions={generateFollowups(msg.chartType || '', msg.content, msg.sqlQuery || '')}
+          onSelect={onFollowup}
+        />
+      )}
     </div>
   )
 }
