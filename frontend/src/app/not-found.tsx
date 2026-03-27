@@ -13,8 +13,8 @@ export default function NotFound() {
         </Link>
         <div className="hidden sm:flex items-center gap-6 text-sm font-medium text-[#0A3963]">
           <Link href="/" className="hover:text-[#0AA4B0] transition-colors">Home</Link>
-          <Link href="/chat" className="hover:text-[#0AA4B0] transition-colors">Insights</Link>
-          <Link href="/dashboard" className="hover:text-[#0AA4B0] transition-colors">Solutions</Link>
+          <Link href="/#features" className="hover:text-[#0AA4B0] transition-colors">Features</Link>
+          <Link href="/#how-it-works" className="hover:text-[#0AA4B0] transition-colors">How It Works</Link>
         </div>
       </nav>
 
@@ -43,8 +43,8 @@ export default function NotFound() {
       <footer className="px-6 lg:px-12 py-4 flex items-center justify-between text-sm text-gray-400">
         <div className="flex gap-4">
           <Link href="/" className="hover:text-gray-600">Home</Link>
-          <Link href="/chat" className="hover:text-gray-600">Insights</Link>
-          <Link href="/dashboard" className="hover:text-gray-600">Solutions</Link>
+          <Link href="/#features" className="hover:text-gray-600">Features</Link>
+          <Link href="/#how-it-works" className="hover:text-gray-600">How It Works</Link>
         </div>
         <span>Copyright &copy; TelecomCo Inc.</span>
       </footer>
