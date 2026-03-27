@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { X, BarChart3, FileDown, Code2, Download, Copy, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { PlotlyChart } from '@/components/chat/PlotlyChart'
 
 interface MessageData {
   id: string
@@ -122,21 +123,28 @@ export function InfoPanel({ open, onClose, messages }: Props) {
                 <EmptyState icon={BarChart3} text="No charts in this conversation yet" />
               ) : (
                 charts.map(msg => (
-                  <div key={msg.id} className="rounded-lg border border-border bg-background p-3">
-                    <div className="text-xs font-medium mb-1 truncate">
+                  <div key={msg.id} className="rounded-lg border border-border bg-background p-2 overflow-hidden">
+                    <div className="text-xs font-medium px-1 mb-1 truncate">
                       {msg.chartConfig?.title || `${msg.chartType} chart`}
                     </div>
-                    <div className="text-[10px] text-muted-foreground">
-                      {msg.chartType} - {msg.dataRows?.length} data points
-                    </div>
-                    {msg.createdAt && (
-                      <div className="text-[10px] text-muted-foreground mt-1">
-                        {new Date(msg.createdAt).toLocaleString()}
+                    {/* Render actual mini chart */}
+                    {msg.dataColumns && msg.dataRows && msg.chartType && (
+                      <div className="w-full min-w-0 overflow-hidden rounded">
+                        <PlotlyChart
+                          chartType={msg.chartType}
+                          columns={msg.dataColumns}
+                          data={msg.dataRows}
+                          config={msg.chartConfig || {}}
+                          height={180}
+                        />
                       </div>
                     )}
-                    <div className="mt-2">
-                      <Button variant="outline" size="sm" className="h-6 text-[10px] w-full" onClick={() => downloadCSV(msg)}>
-                        <Download className="h-3 w-3 mr-1" /> Download Data
+                    <div className="flex items-center justify-between px-1 mt-1">
+                      <span className="text-[10px] text-muted-foreground">
+                        {msg.createdAt && new Date(msg.createdAt).toLocaleTimeString()}
+                      </span>
+                      <Button variant="ghost" size="sm" className="h-6 text-[10px]" onClick={() => downloadCSV(msg)}>
+                        <Download className="h-3 w-3 mr-1" /> CSV
                       </Button>
                     </div>
                   </div>
