@@ -24,19 +24,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     image: session.user.image,
   } : null
 
-  const handleNewChat = async () => {
-    try {
-      const res = await fetch('/api/conversations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: 'New Chat' }),
-      })
-      const conv = await res.json()
-      mutateConversations()
-      router.push(`/chat/${conv.id}`)
-    } catch {
-      router.push('/chat')
-    }
+  const handleNewChat = () => {
+    // Navigate to /chat (lazy creation - no DB record until first message)
+    router.push('/chat')
   }
 
   const handleDeleteChat = async (id: string) => {

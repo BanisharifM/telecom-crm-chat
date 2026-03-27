@@ -69,9 +69,15 @@ export default function ConversationPage() {
     ...pendingMessages,
   ]
 
+  const scrollToBottom = useCallback(() => {
+    setTimeout(() => {
+      endRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }, 50)
+  }, [])
+
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, loading])
+    scrollToBottom()
+  }, [messages, loading, scrollToBottom])
 
   const saveMessage = async (msg: {
     role: string; content: string;
@@ -90,9 +96,10 @@ export default function ConversationPage() {
     if (!q || loading) return
     setInput('')
 
-    const userMsg: DisplayMessage = { id: `pending-${Date.now()}`, role: 'user', content: q }
+    const userMsg: DisplayMessage = { id: `pending-${Date.now()}`, role: 'user', content: q, createdAt: new Date().toISOString() }
     setPendingMessages(prev => [...prev, userMsg])
     setLoading(true)
+    scrollToBottom()
 
     try {
       // Save user message
