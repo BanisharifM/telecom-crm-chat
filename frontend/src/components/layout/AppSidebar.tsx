@@ -299,22 +299,23 @@ function ConversationItem({ conv, active, onClick, onDelete, onRename, onPin }: 
         className="flex-1 flex items-center gap-2 pl-3 pr-8 py-2 text-sm text-left min-w-0"
       >
         {conv.pinned && <Pin className="h-3 w-3 shrink-0 text-sidebar-accent" />}
-        {/* Fade truncation like Claude */}
-        <span className="relative overflow-hidden whitespace-nowrap flex-1">
+        {/* Text with CSS mask fade (no visible rectangle) */}
+        <span className="overflow-hidden whitespace-nowrap flex-1"
+          style={{
+            maskImage: 'linear-gradient(to right, black 80%, transparent 100%)',
+            WebkitMaskImage: 'linear-gradient(to right, black 80%, transparent 100%)',
+          }}
+        >
           {conv.title}
-          <span className={cn(
-            'absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l',
-            active ? 'from-white/10' : 'from-sidebar group-hover:from-white/[0.03]'
-          )} />
         </span>
       </button>
 
-      {/* Three-dot menu button */}
+      {/* Three-dot menu - always visible on mobile (no hover), hover on desktop */}
       <button
         onClick={(e) => { e.stopPropagation(); setMenuOpen(!menuOpen) }}
         className={cn(
-          'absolute right-1 shrink-0 flex items-center justify-center w-7 h-7 rounded text-sidebar-foreground/30 hover:text-white hover:bg-white/10 transition-colors',
-          menuOpen ? 'flex' : 'hidden group-hover:flex'
+          'absolute right-1 shrink-0 flex items-center justify-center w-7 h-7 rounded text-sidebar-foreground/40 hover:text-white hover:bg-white/10 transition-colors',
+          menuOpen ? 'opacity-100' : 'md:opacity-0 md:group-hover:opacity-100 opacity-100'
         )}
         aria-label="Chat options"
       >
