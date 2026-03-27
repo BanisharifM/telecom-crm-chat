@@ -35,8 +35,10 @@ function calculateHealthScore(c: CustomerRecord): { score: number; label: string
   let score = 100
   const factors: string[] = []
 
-  if (c['Customer service calls'] >= 4) {
-    score -= 30; factors.push(`${c['Customer service calls']} service calls (high risk - 3x churn rate)`)
+  if (c['Customer service calls'] >= 5) {
+    score -= 45; factors.push(`${c['Customer service calls']} service calls (critical - 3x+ churn rate)`)
+  } else if (c['Customer service calls'] === 4) {
+    score -= 30; factors.push(`${c['Customer service calls']} service calls (high risk)`)
   } else if (c['Customer service calls'] >= 2) {
     score -= 10; factors.push(`${c['Customer service calls']} service calls`)
   }
