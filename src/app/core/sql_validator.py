@@ -65,8 +65,8 @@ def _validate_structure(sql: str, dialect: str = "postgres") -> None:
     except sqlglot.errors.ParseError as e:
         raise SQLValidationError(f"SQL syntax error: {e}") from e
 
-    # Must be a SELECT statement
-    if not isinstance(parsed, exp.Select):
+    # Must be a SELECT statement (or UNION of SELECTs)
+    if not isinstance(parsed, (exp.Select, exp.Union)):
         raise SQLValidationError("Only SELECT statements are allowed.")
 
     # Collect CTE aliases (WITH ... AS) so they are treated as valid tables
@@ -75,8 +75,14 @@ def _validate_structure(sql: str, dialect: str = "postgres") -> None:
         if cte.alias:
             cte_aliases.add(cte.alias)
 
-    # Validate table references (allow CTE aliases + known tables)
-    allowed_tables = VALID_TABLES | cte_aliases
+    # Collect subquery aliases
+    subquery_aliases: set[str] = set()
+    for subq in parsed.find_all(exp.Subquery):
+        if subq.alias:
+            subquery_aliases.add(subq.alias)
+
+    # Validate table references (allow CTE aliases + subquery aliases + known tables)
+    allowed_tables = VALID_TABLES | cte_aliases | subquery_aliases
     for table in parsed.find_all(exp.Table):
         table_name = table.name
         if table_name and table_name not in allowed_tables:

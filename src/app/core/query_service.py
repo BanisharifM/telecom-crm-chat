@@ -164,10 +164,11 @@ Use markdown formatting. Be conversational, not robotic."""},
         )
 
     return QueryResult(
-        success=True,
+        success=False,
         question=question,
         sql="",
         explanation=helpful_msg,
+        error="",  # Empty error so UI shows explanation, not error
         chart_type="none",
         chart_config={},
         query_time_ms=round(elapsed, 1),

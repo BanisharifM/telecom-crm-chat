@@ -105,38 +105,42 @@ export default function NewChatPage() {
       }
       setMessages(prev => [...prev, assistantMsg])
 
-      // NOW create the conversation in DB (lazy creation)
-      const convRes = await fetch('/api/conversations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: q.length > 50 ? q.substring(0, 50) + '...' : q }),
-      })
-      const conv = await convRes.json()
-
-      // Save both messages to DB
-      const saveMsg = async (msg: any) => {
-        await fetch(`/api/conversations/${conv.id}/messages`, {
+      // Only persist to DB if the query succeeded
+      // Failed queries (clarification messages) stay local - no orphan conversations
+      if (res.success) {
+        // Create conversation in DB (lazy creation)
+        const convRes = await fetch('/api/conversations', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(msg),
+          body: JSON.stringify({ title: q.length > 50 ? q.substring(0, 50) + '...' : q }),
         })
+        const conv = await convRes.json()
+
+        // Save both messages to DB
+        const saveMsg = async (msg: any) => {
+          await fetch(`/api/conversations/${conv.id}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(msg),
+          })
+        }
+
+        await saveMsg({ role: 'user', content: q })
+        await saveMsg({
+          role: 'assistant',
+          content: res.explanation || res.error,
+          sqlQuery: res.sql,
+          chartType: res.chart_type,
+          chartConfig: res.chart_config,
+          dataColumns: res.columns,
+          dataRows: res.data,
+          queryTimeMs: res.query_time_ms,
+          rowsReturned: res.rows_returned,
+        })
+
+        // Navigate to the conversation page
+        window.history.replaceState(null, '', `/chat/${conv.id}`)
       }
-
-      await saveMsg({ role: 'user', content: q })
-      await saveMsg({
-        role: 'assistant',
-        content: res.explanation || res.error,
-        sqlQuery: res.sql,
-        chartType: res.chart_type,
-        chartConfig: res.chart_config,
-        dataColumns: res.columns,
-        dataRows: res.data,
-        queryTimeMs: res.query_time_ms,
-        rowsReturned: res.rows_returned,
-      })
-
-      // Navigate to the conversation page (replaceState to avoid back-button issues)
-      window.history.replaceState(null, '', `/chat/${conv.id}`)
 
     } catch (err: any) {
       setMessages(prev => [...prev, {
