@@ -97,8 +97,8 @@ export default function ChatPage() {
         {messages.length === 0 && !loading && (
           <div className="max-w-2xl mx-auto pt-8 animate-fade-in">
             <div className="text-center mb-8">
-              <img src="/logo-horizontal.png" alt="TelecomCo" className="h-12 w-auto mx-auto mb-4 dark:block hidden" />
-              <img src="/logo-light.png" alt="TelecomCo" className="h-12 w-auto mx-auto mb-4 dark:hidden block" />
+              <img src="/logo-horizontal.png" alt="TelecomCo" className="w-64 h-auto mx-auto mb-4 dark:block hidden" />
+              <img src="/logo-light.png" alt="TelecomCo" className="w-64 h-auto mx-auto mb-4 dark:hidden block" />
               <p className="text-muted-foreground mt-1">
                 Ask questions about <strong>3,333 telecom customers</strong> - churn, billing, service calls, and more.
               </p>
