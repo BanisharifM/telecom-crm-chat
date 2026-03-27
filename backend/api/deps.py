@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import threading
+
 import duckdb
 from openai import OpenAI
 
@@ -13,6 +15,7 @@ from app.core.llm import create_client
 _db: duckdb.DuckDBPyConnection | None = None
 _client: OpenAI | None = None
 _settings: Settings | None = None
+_db_lock = threading.Lock()
 
 
 def init_deps():
@@ -24,8 +27,13 @@ def init_deps():
 
 
 def get_db() -> duckdb.DuckDBPyConnection:
+    """Return a thread-safe cursor from the main connection.
+
+    DuckDB connections are not thread-safe, but cursors created via
+    .cursor() can be used safely from different threads.
+    """
     assert _db is not None, "Database not initialized"
-    return _db
+    return _db.cursor()
 
 
 def get_client() -> OpenAI:
