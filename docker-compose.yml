@@ -42,9 +42,10 @@ services:
 
   # Database migrations - run with: docker compose run --rm migrate
   migrate:
-    build: ./frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.migrate
     env_file: .env
-    command: npx prisma migrate deploy
     profiles:
       - migration
 

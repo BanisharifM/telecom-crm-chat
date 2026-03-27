@@ -1,0 +1,15 @@
+FROM node:20-alpine
+WORKDIR /app
+
+# Copy only what Prisma needs
+COPY package.json ./
+COPY prisma ./prisma/
+
+# Install only Prisma (skip other deps)
+RUN npm install prisma @prisma/client --legacy-peer-deps
+
+# Generate Prisma client
+RUN npx prisma generate
+
+# Run migrations
+CMD ["npx", "prisma", "migrate", "deploy"]
