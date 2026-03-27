@@ -2,8 +2,8 @@
 
 import dynamic from 'next/dynamic'
 
-// Brand-aligned palette: teal primary, then blue, green, red, amber, cyan
-const COLORS = ['#2BB5A0', '#1B6B9C', '#10B981', '#EF4444', '#F59E0B', '#06B6D4', '#3B82F6', '#EC4899']
+// Exact brand colors from Fig1.png: teal #0AA4B0, dark blue #0A3963
+const COLORS = ['#0AA4B0', '#0A3963', '#10B981', '#EF4444', '#F59E0B', '#3B82F6', '#EC4899', '#8B5CF6']
 
 interface Props {
   chartType: string
