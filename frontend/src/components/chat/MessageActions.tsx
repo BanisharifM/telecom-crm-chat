@@ -25,49 +25,60 @@ export function MessageActions({ content, messageId, role }: Props) {
     setFeedback(newRating)
   }
 
-  return (
-    <div className={cn(
-      'flex items-center gap-0.5 h-0 overflow-visible',
-      'opacity-0 group-hover:opacity-100 transition-opacity',
-    )}>
-      <div className="flex items-center gap-0.5 -mt-1 bg-card/80 backdrop-blur-sm rounded-md border border-border/50 px-0.5 py-0.5">
-        <button
-          onClick={handleCopy}
-          className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-          aria-label="Copy message"
-        >
-          {copied ? <Check className="h-3 w-3 text-primary" /> : <Copy className="h-3 w-3" />}
-        </button>
+  // Only show on assistant messages (Claude pattern)
+  if (role !== 'assistant') return null
 
-        {role === 'assistant' && (
-          <>
-            <button
-              onClick={() => handleFeedback('up')}
-              className={cn(
-                'p-1 rounded transition-colors',
-                feedback === 'up'
-                  ? 'text-primary bg-primary/10'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-              )}
-              aria-label="Good response"
-            >
-              <ThumbsUp className="h-3 w-3" />
-            </button>
-            <button
-              onClick={() => handleFeedback('down')}
-              className={cn(
-                'p-1 rounded transition-colors',
-                feedback === 'down'
-                  ? 'text-destructive bg-destructive/10'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-              )}
-              aria-label="Bad response"
-            >
-              <ThumbsDown className="h-3 w-3" />
-            </button>
-          </>
-        )}
-      </div>
+  return (
+    <div className="flex items-center gap-1 mt-1.5 ml-1">
+      <ActionButton
+        onClick={handleCopy}
+        active={copied}
+        activeColor="text-primary"
+        label="Copy message"
+      >
+        {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+      </ActionButton>
+
+      <ActionButton
+        onClick={() => handleFeedback('up')}
+        active={feedback === 'up'}
+        activeColor="text-primary"
+        label="Good response"
+      >
+        <ThumbsUp className="h-3.5 w-3.5" />
+      </ActionButton>
+
+      <ActionButton
+        onClick={() => handleFeedback('down')}
+        active={feedback === 'down'}
+        activeColor="text-destructive"
+        label="Bad response"
+      >
+        <ThumbsDown className="h-3.5 w-3.5" />
+      </ActionButton>
     </div>
+  )
+}
+
+function ActionButton({ children, onClick, active, activeColor, label }: {
+  children: React.ReactNode
+  onClick: () => void
+  active: boolean
+  activeColor: string
+  label: string
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        'p-1.5 rounded-md transition-colors',
+        active
+          ? `${activeColor} bg-current/10`
+          : 'text-muted-foreground/50 hover:text-muted-foreground hover:bg-muted/50'
+      )}
+      aria-label={label}
+    >
+      {children}
+    </button>
   )
 }

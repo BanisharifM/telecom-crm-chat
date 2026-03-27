@@ -135,8 +135,10 @@ export default function NewChatPage() {
         rowsReturned: res.rows_returned,
       })
 
-      // Navigate to the conversation page
-      window.history.replaceState(null, '', `/chat/${conv.id}`)
+      // Navigate to the conversation page (full navigation, not just URL change)
+      // This ensures subsequent messages use the [id]/page.tsx component
+      // which appends to the existing conversation instead of creating new ones
+      router.push(`/chat/${conv.id}`)
 
     } catch (err: any) {
       setMessages(prev => [...prev, {
@@ -303,7 +305,7 @@ function downloadChartImage(msgId: string, title: string) {
 
 function MessageBubble({ msg, onDownloadCSV }: { msg: DisplayMessage; onDownloadCSV: () => void }) {
   return (
-    <div className={cn('max-w-3xl animate-fade-in group', msg.role === 'user' ? 'ml-auto' : '')}>
+    <div className={cn('max-w-3xl animate-fade-in', msg.role === 'user' ? 'ml-auto' : '')}>
       <div className={cn('text-[10px] uppercase tracking-wider font-bold mb-1', msg.role === 'user' ? 'text-right text-muted-foreground' : 'text-primary')}>
         {msg.role === 'user' ? 'You' : 'Assistant'}
       </div>
@@ -382,8 +384,9 @@ function MessageBubble({ msg, onDownloadCSV }: { msg: DisplayMessage; onDownload
           </div>
         )}
 
-        <MessageActions content={msg.content} messageId={msg.id} role={msg.role} />
       </div>
+      {/* Action buttons below the bubble (Claude pattern) */}
+      <MessageActions content={msg.content} messageId={msg.id} role={msg.role} />
     </div>
   )
 }

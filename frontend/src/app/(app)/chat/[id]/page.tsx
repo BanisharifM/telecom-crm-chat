@@ -325,7 +325,7 @@ function downloadChartImage(msgId: string, title: string) {
 
 function MessageBubble({ msg, onDownloadCSV }: { msg: DisplayMessage; onDownloadCSV: () => void }) {
   return (
-    <div className={cn('max-w-3xl animate-fade-in group', msg.role === 'user' ? 'ml-auto' : '')}>
+    <div className={cn('max-w-3xl animate-fade-in', msg.role === 'user' ? 'ml-auto' : '')}>
       <div className={cn('text-[10px] uppercase tracking-wider font-bold mb-1', msg.role === 'user' ? 'text-right text-muted-foreground' : 'text-primary')}>
         {msg.role === 'user' ? 'You' : 'Assistant'}
       </div>
@@ -404,9 +404,9 @@ function MessageBubble({ msg, onDownloadCSV }: { msg: DisplayMessage; onDownload
           </div>
         )}
 
-        {/* Copy + Feedback actions (show on hover) */}
-        <MessageActions content={msg.content} messageId={msg.id} role={msg.role} />
       </div>
+      {/* Action buttons below the bubble (Claude pattern) */}
+      <MessageActions content={msg.content} messageId={msg.id} role={msg.role} />
     </div>
   )
 }
