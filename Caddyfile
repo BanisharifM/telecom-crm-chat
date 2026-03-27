@@ -1,10 +1,12 @@
 telecomco.chat {
-    # Backend API — must come before frontend catch-all
-    handle /api/* {
+    # FastAPI backend - CRM query engine
+    handle /api/query/* {
+        uri strip_prefix /api/query
+        rewrite * /api{uri}
         reverse_proxy backend:8000
     }
 
-    # Frontend (Next.js) — catch-all
+    # Next.js frontend - everything else (including /api/auth)
     handle {
         reverse_proxy frontend:3000
     }

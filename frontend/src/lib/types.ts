@@ -1,13 +1,41 @@
-// TypeScript types matching backend Pydantic schemas
-
-export interface ChatMessage {
-  role: 'user' | 'assistant'
-  content: string
+// ========== Auth ==========
+export interface User {
+  id: string
+  name: string | null
+  email: string
+  image: string | null
 }
 
+// ========== Conversations ==========
+export interface Conversation {
+  id: string
+  title: string
+  pinned: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+// ========== Messages ==========
+export interface Message {
+  id: string
+  conversationId: string
+  role: 'user' | 'assistant' | 'system'
+  content: string
+  sqlQuery?: string | null
+  chartType?: string | null
+  chartConfig?: Record<string, any> | null
+  dataColumns?: string[] | null
+  dataRows?: any[][] | null
+  queryTimeMs?: number | null
+  rowsReturned?: number | null
+  createdAt: string
+}
+
+// ========== Chat API ==========
 export interface ChatRequest {
   question: string
-  conversation_history: ChatMessage[]
+  conversationId: string
+  conversationHistory: { role: string; content: string }[]
 }
 
 export interface ChatResponse {
@@ -24,6 +52,7 @@ export interface ChatResponse {
   rows_returned: number
 }
 
+// ========== Dashboard ==========
 export interface KPIData {
   total_customers: number
   total_churned: number
@@ -41,6 +70,7 @@ export interface ChartData {
   chart_config: Record<string, any>
 }
 
+// ========== Explorer ==========
 export interface FilterOptions {
   states: string[]
   international_plans: string[]

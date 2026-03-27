@@ -1,29 +1,56 @@
 {
-  "name": "telecom-crm-chat",
-  "version": "1.0.0",
+  "name": "telecomco-crm",
+  "version": "2.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio"
   },
   "dependencies": {
-    "@emotion/react": "^11.14.0",
-    "@emotion/styled": "^11.14.0",
-    "@mui/icons-material": "^6.4.0",
-    "@mui/material": "^6.4.0",
-    "@mui/x-data-grid": "^7.28.0",
     "next": "^14.2.0",
-    "plotly.js": "^2.35.0",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
-    "react-plotly.js": "^2.6.0"
+    "next-auth": "^5.0.0-beta.25",
+    "@auth/prisma-adapter": "^2.7.0",
+    "@prisma/client": "^6.2.0",
+    "next-themes": "^0.4.4",
+    "@radix-ui/react-avatar": "^1.1.0",
+    "@radix-ui/react-dialog": "^1.1.0",
+    "@radix-ui/react-dropdown-menu": "^2.1.0",
+    "@radix-ui/react-scroll-area": "^1.2.0",
+    "@radix-ui/react-select": "^2.1.0",
+    "@radix-ui/react-separator": "^1.1.0",
+    "@radix-ui/react-slot": "^1.1.0",
+    "@radix-ui/react-tabs": "^1.1.0",
+    "@radix-ui/react-tooltip": "^1.1.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.0",
+    "tailwind-merge": "^2.6.0",
+    "lucide-react": "^0.468.0",
+    "react-markdown": "^9.0.0",
+    "remark-gfm": "^4.0.0",
+    "rehype-highlight": "^7.0.0",
+    "react-plotly.js": "^2.6.0",
+    "plotly.js-basic-dist-min": "^2.35.0",
+    "swr": "^2.2.5",
+    "sonner": "^1.7.0",
+    "date-fns": "^4.1.0",
+    "framer-motion": "^11.14.0"
   },
   "devDependencies": {
-    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0",
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.0",
-    "typescript": "^5.7.0"
+    "@types/node": "^22.0.0",
+    "tailwindcss": "^3.4.0",
+    "postcss": "^8.4.0",
+    "autoprefixer": "^10.4.0",
+    "prisma": "^6.2.0"
   }
 }

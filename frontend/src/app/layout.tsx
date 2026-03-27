@@ -1,43 +1,30 @@
-'use client'
+import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
+import { ThemeProvider } from '@/components/layout/ThemeProvider'
+import '@/styles/globals.css'
 
-import { ThemeProvider, CssBaseline, Box } from '@mui/material'
-import theme from '@/theme/theme'
-import Sidebar from '@/components/layout/Sidebar'
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter',
+})
 
-const DRAWER_WIDTH = 280
+export const metadata: Metadata = {
+  title: 'TelecomCo CRM - AI Data Assistant',
+  description: 'Natural language chat interface for telecom CRM data analytics',
+}
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <head>
-        <title>TelecomCo CRM Chat</title>
-        <meta name="description" content="AI-powered chat interface for telecom CRM data analytics" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body style={{ margin: 0 }}>
-        <ThemeProvider theme={theme}>
-          <CssBaseline />
-          <Box sx={{ display: 'flex', minHeight: '100vh' }}>
-            <Sidebar width={DRAWER_WIDTH} />
-            <Box
-              component="main"
-              sx={{
-                flexGrow: 1,
-                p: { xs: 1.5, sm: 2, md: 3 },
-                maxWidth: 1200,
-                mx: 'auto',
-                width: '100%',
-                mt: { xs: '64px', md: 0 },
-              }}
-            >
-              {children}
-            </Box>
-          </Box>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${inter.variable} font-sans antialiased`}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
         </ThemeProvider>
       </body>
     </html>
