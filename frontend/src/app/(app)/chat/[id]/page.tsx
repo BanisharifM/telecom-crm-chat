@@ -130,27 +130,22 @@ export default function ConversationPage() {
       }
       setPendingMessages(prev => [...prev, assistantMsg])
 
-      // Only save to DB if query succeeded
-      // Failed clarification messages stay local-only (not persisted)
-      if (res.success) {
-        await saveMessage({
-          role: 'assistant',
-          content: res.explanation || res.error,
-          sqlQuery: res.sql,
-          chartType: res.chart_type,
-          chartConfig: res.chart_config,
-          dataColumns: res.columns,
-          dataRows: res.data,
-          queryTimeMs: res.query_time_ms,
-          rowsReturned: res.rows_returned,
-        })
+      // Save assistant message to DB (both success and failure are real messages)
+      await saveMessage({
+        role: 'assistant',
+        content: res.explanation || res.error,
+        sqlQuery: res.sql || null,
+        chartType: res.chart_type,
+        chartConfig: res.chart_config,
+        dataColumns: res.columns?.length ? res.columns : null,
+        dataRows: res.data?.length ? res.data : null,
+        queryTimeMs: res.query_time_ms,
+        rowsReturned: res.rows_returned,
+      })
 
-        // Refresh from DB and clear pending (DB now has the data)
-        await mutate()
-        setPendingMessages([])
-      }
-      // If failed: message stays in pendingMessages (visible locally)
-      // On page refresh, the failed message disappears (not persisted)
+      // Refresh from DB and clear pending
+      await mutate()
+      setPendingMessages([])
     } catch (err: any) {
       const errorMsg: DisplayMessage = {
         id: `pending-error-${Date.now()}`,
