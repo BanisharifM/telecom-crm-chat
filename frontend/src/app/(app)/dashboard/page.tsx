@@ -36,8 +36,10 @@ export default function DashboardPage() {
   const [stateMap, setStateMap] = useState<StateMapData[]>([])
   const [loading, setLoading] = useState(true)
 
-  // Executive summary
+  // Executive summary - persisted, always visible at top when exists
   const [summary, setSummary] = useState<string | null>(null)
+  const [summaryTime, setSummaryTime] = useState<string | null>(null)
+  const [summaryOpen, setSummaryOpen] = useState(true)
   const [summaryLoading, setSummaryLoading] = useState(false)
 
   useEffect(() => {
@@ -46,14 +48,23 @@ export default function DashboardPage() {
       getInsights().then(d => setInsights(d.insights)),
       getCharts().then(d => setCharts(d.charts)),
       getStateMapData().then(d => setStateMap(d.states)).catch(() => {}),
+      // Load cached summary on page load
+      getExecutiveSummary().then(res => {
+        if (res.summary) {
+          setSummary(res.summary)
+          setSummaryTime(res.generated_at)
+        }
+      }).catch(() => {}),
     ]).finally(() => setLoading(false))
   }, [])
 
-  const handleGenerateSummary = async () => {
+  const handleGenerateSummary = async (regenerate = false) => {
     setSummaryLoading(true)
+    setSummaryOpen(true)
     try {
-      const res = await getExecutiveSummary()
+      const res = await getExecutiveSummary(regenerate)
       setSummary(res.summary)
+      setSummaryTime(res.generated_at)
     } catch {
       setSummary('Failed to generate summary. Please try again.')
     } finally {
@@ -69,20 +80,32 @@ export default function DashboardPage() {
           <h1 className="text-lg font-bold tracking-tight">Dashboard</h1>
           <p className="text-sm text-muted-foreground">At-a-glance overview of your telecom customer data.</p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleGenerateSummary}
-          disabled={summaryLoading}
-          className="gap-2"
-        >
-          {summaryLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
-          {summaryLoading ? 'Generating...' : 'AI Summary'}
-        </Button>
+        <div className="flex items-center gap-2">
+          {summary && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSummaryOpen(!summaryOpen)}
+              className="text-xs text-muted-foreground"
+            >
+              {summaryOpen ? 'Hide Summary' : 'Show Summary'}
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleGenerateSummary(!summary ? false : true)}
+            disabled={summaryLoading}
+            className="gap-2"
+          >
+            {summaryLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
+            {summaryLoading ? 'Generating...' : summary ? 'Regenerate' : 'AI Summary'}
+          </Button>
+        </div>
       </div>
 
-      {/* Executive Summary (when generated) */}
-      {summary && (
+      {/* Executive Summary - persisted, toggleable */}
+      {summary && summaryOpen && (
         <motion.div
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -93,12 +116,11 @@ export default function DashboardPage() {
               <FileText className="h-4 w-4 text-primary" />
               <h2 className="text-sm font-bold">AI Executive Summary</h2>
             </div>
-            <button
-              onClick={() => setSummary(null)}
-              className="text-xs text-muted-foreground hover:text-foreground"
-            >
-              Dismiss
-            </button>
+            {summaryTime && (
+              <span className="text-[10px] text-muted-foreground">
+                Generated {new Date(summaryTime).toLocaleDateString()}
+              </span>
+            )}
           </div>
           <div className="text-sm">
             <ChatMarkdown content={summary} />

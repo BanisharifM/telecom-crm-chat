@@ -53,6 +53,7 @@ export async function getStateMapData(): Promise<{ states: { state: string; chur
 }
 
 // AI Executive Summary
-export async function getExecutiveSummary(): Promise<{ summary: string }> {
-  return fetchAPI<{ summary: string }>('/dashboard/executive-summary')
+export async function getExecutiveSummary(regenerate = false): Promise<{ summary: string; generated_at: string | null; cached: boolean }> {
+  const params = regenerate ? '?regenerate=true' : ''
+  return fetchAPI<{ summary: string; generated_at: string | null; cached: boolean }>(`/dashboard/executive-summary${params}`)
 }

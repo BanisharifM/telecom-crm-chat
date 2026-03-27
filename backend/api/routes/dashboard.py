@@ -129,15 +129,35 @@ def state_map():
 
 
 @router.get("/executive-summary")
-def executive_summary():
-    """Generate AI executive summary from CRM data."""
-    from app.core.llm import create_client
-    from backend.api.deps import get_app_settings
+def executive_summary(regenerate: bool = False):
+    """Get or generate AI executive summary. Saved to DB for persistence."""
+    from app.core.database import execute_query_postgres
+    from sqlalchemy import text
 
     settings = get_app_settings()
+
+    # Try to load saved summary (unless regenerate requested)
+    if not regenerate and settings.database_backend == "postgres":
+        try:
+            from app.core.database import _pg_engine
+            if _pg_engine:
+                with _pg_engine.connect() as conn:
+                    row = conn.execute(text(
+                        "SELECT value, updated_at FROM app_settings WHERE key = 'executive_summary'"
+                    )).fetchone()
+                    if row:
+                        return {
+                            "summary": row[0],
+                            "generated_at": str(row[1]),
+                            "cached": True,
+                        }
+        except Exception:
+            pass
+
+    # Generate fresh summary
+    from app.core.llm import create_client
     client = create_client(settings)
 
-    # Gather key metrics
     kpi_df = _run_query("SELECT * FROM overall_kpis")
     kpi = kpi_df.iloc[0]
 
@@ -162,7 +182,6 @@ def executive_summary():
         FROM customers GROUP BY status
     """)
 
-    # Build context
     context = f"""
 CRM Data Summary:
 - Total customers: {int(float(kpi['total_customers']))}
@@ -208,4 +227,21 @@ Revenue by churn status:
         ],
     )
 
-    return {"summary": response.choices[0].message.content}
+    summary_text = response.choices[0].message.content
+
+    # Save to DB
+    if settings.database_backend == "postgres":
+        try:
+            from app.core.database import _pg_engine
+            if _pg_engine:
+                with _pg_engine.connect() as conn:
+                    conn.execute(text("""
+                        INSERT INTO app_settings (key, value, updated_at)
+                        VALUES ('executive_summary', :val, NOW())
+                        ON CONFLICT (key) DO UPDATE SET value = :val, updated_at = NOW()
+                    """), {"val": summary_text})
+                    conn.commit()
+        except Exception:
+            pass
+
+    return {"summary": summary_text, "generated_at": None, "cached": False}
