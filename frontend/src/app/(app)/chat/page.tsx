@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Send, Loader2, Copy, Download, ChevronDown, ChevronUp } from 'lucide-react'
+import { Send, Loader2, Copy, Download, ChevronDown, ChevronUp, Image } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -276,6 +276,31 @@ export default function NewChatPage() {
   )
 }
 
+function downloadChartImage(msgId: string, title: string) {
+  const container = document.getElementById(`chart-${msgId}`)
+  if (!container) return
+  const plotDiv = container.querySelector('.js-plotly-plot') as any
+  if (!plotDiv) return
+  try {
+    const Plotly = require('plotly.js-basic-dist-min')
+    Plotly.downloadImage(plotDiv, {
+      format: 'png',
+      width: 1200,
+      height: 600,
+      filename: title.replace(/[^a-zA-Z0-9 ]/g, '').trim().replace(/\s+/g, '_') || 'chart',
+    })
+  } catch {
+    // Fallback: use toImage and create download link
+    const canvas = container.querySelector('canvas')
+    if (canvas) {
+      const a = document.createElement('a')
+      a.href = canvas.toDataURL('image/png')
+      a.download = `${title}.png`
+      a.click()
+    }
+  }
+}
+
 function MessageBubble({ msg, onDownloadCSV }: { msg: DisplayMessage; onDownloadCSV: () => void }) {
   return (
     <div className={cn('max-w-3xl animate-fade-in group', msg.role === 'user' ? 'ml-auto' : '')}>
@@ -306,7 +331,7 @@ function MessageBubble({ msg, onDownloadCSV }: { msg: DisplayMessage; onDownload
         )}
 
         {msg.dataRows && msg.dataRows.length > 1 && msg.chartType && !['none', 'table', 'metric'].includes(msg.chartType) && msg.dataColumns && (
-          <div className="mt-3 -mx-1">
+          <div className="mt-3 -mx-1" id={`chart-${msg.id}`}>
             <PlotlyChart chartType={msg.chartType} columns={msg.dataColumns} data={msg.dataRows} config={msg.chartConfig || {}} />
           </div>
         )}
@@ -340,10 +365,15 @@ function MessageBubble({ msg, onDownloadCSV }: { msg: DisplayMessage; onDownload
         )}
 
         {msg.dataRows && msg.dataRows.length > 0 && msg.chartType !== 'none' && (
-          <div className="mt-2 flex gap-2">
+          <div className="mt-2 flex gap-2 flex-wrap">
             <Button variant="outline" size="sm" className="text-xs h-7" onClick={onDownloadCSV}>
               <Download className="h-3 w-3 mr-1" /> CSV
             </Button>
+            {msg.chartType && !['none', 'table', 'metric'].includes(msg.chartType) && (
+              <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => downloadChartImage(msg.id, msg.chartConfig?.title || 'chart')}>
+                <Image className="h-3 w-3 mr-1" /> PNG
+              </Button>
+            )}
             {msg.sqlQuery && (
               <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => navigator.clipboard.writeText(msg.sqlQuery!)}>
                 <Copy className="h-3 w-3 mr-1" /> SQL
