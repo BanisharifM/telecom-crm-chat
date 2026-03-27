@@ -76,9 +76,10 @@ export default function ConversationPage() {
     }, 50)
   }, [])
 
+  // Only auto-scroll when loading changes (submit or response received)
   useEffect(() => {
     scrollToBottom()
-  }, [messages, loading, scrollToBottom])
+  }, [loading, scrollToBottom])
 
   const saveMessage = async (msg: {
     role: string; content: string;

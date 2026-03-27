@@ -62,7 +62,7 @@ export default function NewChatPage() {
 
   useEffect(() => {
     scrollToBottom()
-  }, [messages, loading, scrollToBottom])
+  }, [loading, scrollToBottom])
 
   const handleSend = async (question?: string) => {
     const q = question || input.trim()
