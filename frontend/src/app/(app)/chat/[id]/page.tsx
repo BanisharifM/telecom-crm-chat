@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import useSWR from 'swr'
 import { Send, Loader2, Copy, Download, ChevronDown, ChevronUp } from 'lucide-react'
@@ -12,6 +12,9 @@ import { sendChat } from '@/lib/api'
 import type { ChatResponse, Message as MessageType } from '@/lib/types'
 import { ChatMarkdown } from '@/components/chat/ChatMarkdown'
 import { PlotlyChart } from '@/components/chat/PlotlyChart'
+import { DateSeparator, shouldShowDateSeparator } from '@/components/chat/DateSeparator'
+import { ScrollToBottom } from '@/components/chat/ScrollToBottom'
+import { MessageActions } from '@/components/chat/MessageActions'
 
 const fetcher = (url: string) => fetch(url).then(r => r.json())
 
@@ -26,6 +29,7 @@ interface DisplayMessage {
   dataRows?: any[][] | null
   queryTimeMs?: number | null
   rowsReturned?: number | null
+  createdAt?: string
 }
 
 export default function ConversationPage() {
@@ -43,6 +47,8 @@ export default function ConversationPage() {
   const endRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+
   // Combine saved + pending messages
   const messages: DisplayMessage[] = [
     ...(savedMessages || []).map(m => ({
@@ -56,6 +62,7 @@ export default function ConversationPage() {
       dataRows: m.dataRows as any[][] | null,
       queryTimeMs: m.queryTimeMs,
       rowsReturned: m.rowsReturned,
+      createdAt: m.createdAt,
     })),
     ...pendingMessages,
   ]
@@ -147,13 +154,21 @@ export default function ConversationPage() {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 md:px-6 space-y-4">
+      <div ref={scrollContainerRef} className="relative flex-1 overflow-y-auto px-4 py-4 md:px-6 space-y-4">
+        <ScrollToBottom scrollRef={scrollContainerRef} />
+
         {messages.length === 0 && !loading && (
           <SuggestedQueries onSelect={handleSend} />
         )}
 
-        {messages.map(msg => (
-          <MessageBubble key={msg.id} msg={msg} onDownloadCSV={() => downloadCSV(msg)} />
+        {messages.map((msg, i) => (
+          <div key={msg.id}>
+            {/* Date separator */}
+            {msg.createdAt && shouldShowDateSeparator(msg.createdAt, messages[i - 1]?.createdAt) && (
+              <DateSeparator date={msg.createdAt} />
+            )}
+            <MessageBubble msg={msg} onDownloadCSV={() => downloadCSV(msg)} />
+          </div>
         ))}
 
         {loading && (
@@ -235,7 +250,7 @@ function SuggestedQueries({ onSelect }: { onSelect: (q: string) => void }) {
 
 function MessageBubble({ msg, onDownloadCSV }: { msg: DisplayMessage; onDownloadCSV: () => void }) {
   return (
-    <div className={cn('max-w-3xl animate-fade-in', msg.role === 'user' ? 'ml-auto' : '')}>
+    <div className={cn('max-w-3xl animate-fade-in group', msg.role === 'user' ? 'ml-auto' : '')}>
       <div className={cn('text-[10px] uppercase tracking-wider font-bold mb-1', msg.role === 'user' ? 'text-right text-muted-foreground' : 'text-primary')}>
         {msg.role === 'user' ? 'You' : 'Assistant'}
       </div>
@@ -308,6 +323,9 @@ function MessageBubble({ msg, onDownloadCSV }: { msg: DisplayMessage; onDownload
             )}
           </div>
         )}
+
+        {/* Copy + Feedback actions (show on hover) */}
+        <MessageActions content={msg.content} messageId={msg.id} role={msg.role} />
       </div>
     </div>
   )
