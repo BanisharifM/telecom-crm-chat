@@ -1,17 +1,17 @@
 telecomco.chat {
-    # FastAPI backend - CRM query engine
+    # FastAPI backend
+    # /api/query/chat -> backend:8000/api/chat
+    # /api/query/dashboard/kpis -> backend:8000/api/dashboard/kpis
     handle /api/query/* {
-        uri strip_prefix /api/query
-        rewrite * /api{uri}
+        uri replace /api/query /api
         reverse_proxy backend:8000
     }
 
-    # Next.js frontend - everything else (including /api/auth)
+    # Next.js frontend - everything else
     handle {
         reverse_proxy frontend:3000
     }
 
-    # Security headers
     header {
         X-Content-Type-Options nosniff
         X-Frame-Options DENY
