@@ -311,7 +311,7 @@ function MessageBubble({ msg, onDownloadCSV }: { msg: DisplayMessage; onDownload
       )}>
         <ChatMarkdown content={msg.content} />
 
-        {msg.sqlQuery && msg.sqlQuery !== 'SELECT 1' && <SQLViewer sql={msg.sqlQuery} />}
+        {msg.sqlQuery && !msg.sqlQuery.startsWith('SELECT 1') && <SQLViewer sql={msg.sqlQuery} />}
 
         {msg.dataRows && msg.dataRows.length === 1 && msg.chartType !== 'none' && msg.dataColumns && (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-3">
