@@ -3,7 +3,11 @@
 import { memo, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import rehypeHighlight from 'rehype-highlight'
 import { Copy, Check } from 'lucide-react'
+
+// highlight.js theme for code blocks (works in both dark and light mode)
+import 'highlight.js/styles/github-dark.css'
 
 interface Props {
   content: string
@@ -22,14 +26,14 @@ function CodeBlock({ className, children }: { className?: string; children: Reac
 
   return (
     <div className="relative group my-2">
-      <div className="flex items-center justify-between bg-muted px-3 py-1 rounded-t-lg text-[11px] text-muted-foreground">
-        <span>{lang || 'code'}</span>
+      <div className="flex items-center justify-between bg-muted px-3 py-1.5 rounded-t-lg text-[11px] text-muted-foreground">
+        <span className="font-medium">{lang || 'code'}</span>
         <button onClick={handleCopy} className="flex items-center gap-1 hover:text-foreground transition-colors">
           {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
           {copied ? 'Copied!' : 'Copy'}
         </button>
       </div>
-      <pre className="rounded-t-none rounded-b-lg overflow-x-auto p-3 bg-muted/80 text-sm">
+      <pre className="!rounded-t-none rounded-b-lg overflow-x-auto p-3 !bg-[#0d1117] text-sm !mt-0">
         <code className={className}>{children}</code>
       </pre>
     </div>
@@ -40,10 +44,11 @@ export const ChatMarkdown = memo(({ content }: Props) => (
   <div className="chat-markdown">
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
+      rehypePlugins={[rehypeHighlight]}
       components={{
         code({ inline, className, children, ...props }: any) {
           if (inline) {
-            return <code className="bg-muted px-1.5 py-0.5 rounded text-[0.9em]" {...props}>{children}</code>
+            return <code className="bg-muted px-1.5 py-0.5 rounded text-[0.9em] font-mono" {...props}>{children}</code>
           }
           return <CodeBlock className={className}>{children}</CodeBlock>
         },
