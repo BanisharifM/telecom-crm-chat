@@ -25,9 +25,10 @@ interface Props {
   onDeleteChat?: (id: string) => void
   onRenameChat?: (id: string, title: string) => void
   onPinChat?: (id: string, pinned: boolean) => void
+  onOpenSettings?: () => void
 }
 
-export function AppSidebar({ user, conversations = [], onNewChat, onSignOut, onDeleteChat, onRenameChat, onPinChat }: Props) {
+export function AppSidebar({ user, conversations = [], onNewChat, onSignOut, onDeleteChat, onRenameChat, onPinChat, onOpenSettings }: Props) {
   const pathname = usePathname()
   const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -195,7 +196,7 @@ export function AppSidebar({ user, conversations = [], onNewChat, onSignOut, onD
         {/* Action row */}
         <div className="flex items-center justify-between px-2">
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" className="h-7 w-7 text-sidebar-foreground/40 hover:text-white">
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-sidebar-foreground/40 hover:text-white" onClick={onOpenSettings}>
               <Settings className="h-3.5 w-3.5" />
             </Button>
             <ThemeToggle />

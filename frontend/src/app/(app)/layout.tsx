@@ -1,9 +1,11 @@
 'use client'
 
+import { useState } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import { useRouter, usePathname } from 'next/navigation'
 import useSWR from 'swr'
 import { AppSidebar } from '@/components/layout/AppSidebar'
+import { SettingsDialog } from '@/components/layout/SettingsDialog'
 
 const fetcher = (url: string) => fetch(url).then(r => r.json())
 
@@ -11,6 +13,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession()
   const router = useRouter()
   const pathname = usePathname()
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   const { data: conversations, mutate: mutateConversations } = useSWR(
     session?.user ? '/api/conversations' : null,
@@ -25,7 +28,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   } : null
 
   const handleNewChat = () => {
-    // Navigate to /chat (lazy creation - no DB record until first message)
     router.push('/chat')
   }
 
@@ -33,7 +35,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     try {
       await fetch(`/api/conversations/${id}`, { method: 'DELETE' })
       mutateConversations()
-      // If we're viewing the deleted chat, redirect to /chat
       if (pathname === `/chat/${id}`) {
         router.push('/chat')
       }
@@ -72,10 +73,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         onDeleteChat={handleDeleteChat}
         onRenameChat={handleRenameChat}
         onPinChat={handlePinChat}
+        onOpenSettings={() => setSettingsOpen(true)}
       />
       <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden">
         {children}
       </main>
+      <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </div>
   )
 }
