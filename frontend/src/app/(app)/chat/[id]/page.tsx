@@ -134,11 +134,11 @@ export default function ConversationPage() {
       await saveMessage({
         role: 'assistant',
         content: res.explanation || res.error,
-        sqlQuery: res.sql || null,
+        sqlQuery: res.sql || undefined,
         chartType: res.chart_type,
         chartConfig: res.chart_config,
-        dataColumns: res.columns?.length ? res.columns : null,
-        dataRows: res.data?.length ? res.data : null,
+        dataColumns: res.columns?.length ? res.columns : undefined,
+        dataRows: res.data?.length ? res.data : undefined,
         queryTimeMs: res.query_time_ms,
         rowsReturned: res.rows_returned,
       })
