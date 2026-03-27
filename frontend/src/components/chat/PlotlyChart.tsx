@@ -3,8 +3,9 @@
 import dynamic from 'next/dynamic'
 import { useState, useEffect } from 'react'
 
-// Brand colors from Fig1.png
-const COLORS = ['#0AA4B0', '#3B82F6', '#10B981', '#EF4444', '#F59E0B', '#8B5CF6', '#EC4899', '#F97316']
+// Chart series colors - high contrast on both dark and light backgrounds
+const COLORS_DARK = ['#0AA4B0', '#8B5CF6', '#F59E0B', '#22C55E', '#EC4899', '#3B82F6', '#F97316', '#A78BFA']
+const COLORS_LIGHT = ['#0AA4B0', '#0A3963', '#10B981', '#EF4444', '#F59E0B', '#3B82F6', '#EC4899', '#8B5CF6']
 
 // Detect dark mode by observing the <html> class
 function useDarkMode(): boolean {
@@ -32,6 +33,7 @@ function PlotlyChartInner({ chartType, columns, data, config, height = 350 }: Pr
   const Plotly = require('plotly.js-basic-dist-min')
   const Plot = createPlotlyComponent(Plotly)
   const isDark = useDarkMode()
+  const COLORS = isDark ? COLORS_DARK : COLORS_LIGHT
 
   const x = config.x || columns[0]
   const y = config.y || columns[1]

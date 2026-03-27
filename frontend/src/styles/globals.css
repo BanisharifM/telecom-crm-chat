@@ -49,38 +49,48 @@
   }
 
   .dark {
-    --background: 211 84% 12%;    /* #041F3A exact navy from logo */
-    --foreground: 210 40% 92%;
-    --card: 211 70% 16%;
-    --card-foreground: 210 40% 92%;
-    --primary: 184 84% 36%;       /* #0AA4B0 teal - same in both modes */
+    /* Dark theme - Layered surfaces pattern based on Tailwind slate scale
+       Body:     #020617 slate-950 (deepest background)
+       Surface:  #0F172A slate-900 (main content area)
+       Card:     #1E293B slate-800 (cards, panels)
+       Elevated: #334155 slate-700 (hover, tooltips)
+
+       Research: Linear, Vercel, Raycast all use this pattern.
+       #0F172A is the sweet spot for chart readability.
+    */
+    --background: 222 47% 11%;    /* #0F172A slate-900 - main surface */
+    --foreground: 210 40% 98%;    /* #F8FAFC slate-50 - primary text */
+    --card: 217 33% 17%;          /* #1E293B slate-800 - cards elevated above bg */
+    --card-foreground: 214 32% 91%; /* #E2E8F0 slate-200 - card text */
+    --primary: 185 88% 37%;       /* #0AA4B0 teal accent */
     --primary-foreground: 0 0% 100%;
-    --secondary: 184 70% 50%;     /* Lighter teal for dark */
-    --secondary-foreground: 0 0% 100%;
-    --muted: 211 60% 20%;
-    --muted-foreground: 210 30% 60%;
-    --accent: 211 60% 20%;
-    --accent-foreground: 210 40% 92%;
+    --secondary: 217 33% 17%;     /* #1E293B - secondary actions */
+    --secondary-foreground: 210 40% 98%;
+    --muted: 215 25% 27%;         /* #334155 slate-700 - muted backgrounds */
+    --muted-foreground: 215 16% 65%; /* #94A3B8 slate-400 - muted text */
+    --accent: 215 25% 27%;        /* #334155 - hover/accent backgrounds */
+    --accent-foreground: 210 40% 98%;
     --destructive: 0 63% 31%;
     --destructive-foreground: 0 0% 100%;
-    --border: 211 50% 22%;
-    --input: 211 50% 22%;
-    --ring: 184 84% 36%;
+    --border: 217 33% 17%;        /* #1E293B - card borders */
+    --input: 215 25% 27%;         /* #334155 - input borders (slightly brighter) */
+    --ring: 185 88% 37%;          /* Teal focus ring */
 
-    --sidebar: 211 84% 10%;       /* Slightly darker navy */
-    --sidebar-foreground: 210 30% 60%;
-    --sidebar-accent: 184 84% 36%;
+    --sidebar: 222 84% 5%;        /* #020617 slate-950 - deepest layer */
+    --sidebar-foreground: 215 16% 65%; /* #94A3B8 */
+    --sidebar-accent: 185 88% 37%;
 
-    --success: 160 84% 39%;
-    --warning: 38 92% 50%;
-    --danger: 0 84% 60%;
-    --info: 184 84% 36%;
+    --success: 142 71% 45%;       /* #22C55E */
+    --warning: 48 96% 47%;        /* #EAB308 */
+    --danger: 0 84% 60%;          /* #EF4444 */
+    --info: 185 88% 37%;          /* Teal */
 
-    --chart-1: 184 84% 42%;       /* Brighter teal for dark bg */
-    --chart-2: 210 70% 50%;       /* Brighter blue */
-    --chart-3: 160 84% 45%;
-    --chart-4: 0 84% 60%;
-    --chart-5: 38 92% 55%;
+    /* Chart colors - brighter for dark backgrounds */
+    --chart-1: 185 88% 37%;       /* Teal */
+    --chart-2: 258 90% 66%;       /* Violet #8B5CF6 */
+    --chart-3: 38 92% 50%;        /* Amber #F59E0B */
+    --chart-4: 142 71% 45%;       /* Green #22C55E */
+    --chart-5: 330 81% 60%;       /* Pink #EC4899 */
   }
 }
 
