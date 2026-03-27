@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Search, User, Phone, Globe, Shield, AlertTriangle, CheckCircle, TrendingUp, Info } from 'lucide-react'
+import { Search, User, Phone, Globe, AlertTriangle, CheckCircle, TrendingUp } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -74,23 +74,21 @@ function calculateHealthScore(c: CustomerRecord): { score: number; label: string
 
 export default function CustomerPage() {
   const [searchId, setSearchId] = useState('')
-  const [records, setRecords] = useState<CustomerRecord[]>([])
-  const [selectedIdx, setSelectedIdx] = useState(0)
+  const [customer, setCustomer] = useState<CustomerRecord | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
   const handleSearch = async () => {
     const id = parseInt(searchId)
-    if (isNaN(id) || id < 0) { setError('Enter a valid customer ID (0-2665)'); return }
+    if (isNaN(id) || id < 0) { setError('Enter a valid customer ID (0-3332)'); return }
     setLoading(true)
     setError('')
-    setRecords([])
-    setSelectedIdx(0)
+    setCustomer(null)
     try {
       const res = await fetch(`/api/query/explorer/customer/${id}`)
       const data = await res.json()
       if (data.found && data.records.length > 0) {
-        setRecords(data.records)
+        setCustomer(data.records[0])
       } else {
         setError(`Customer ${id} not found`)
       }
@@ -100,8 +98,6 @@ export default function CustomerPage() {
       setLoading(false)
     }
   }
-
-  const customer = records[selectedIdx] || null
   const health = customer ? calculateHealthScore(customer) : null
   const totalCharge = customer
     ? customer['Total day charge'] + customer['Total eve charge'] + customer['Total night charge'] + customer['Total intl charge']
@@ -123,7 +119,7 @@ export default function CustomerPage() {
             value={searchId}
             onChange={e => setSearchId(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleSearch()}
-            placeholder="Enter customer ID (0-2665)..."
+            placeholder="Enter customer ID (0-3332)..."
             className="w-full rounded-lg border border-input bg-background pl-9 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
@@ -139,32 +135,6 @@ export default function CustomerPage() {
           {Array.from({ length: 6 }).map((_, i) => (
             <Card key={i} className="p-4"><Skeleton className="h-24" /></Card>
           ))}
-        </div>
-      )}
-
-      {/* Duplicate records selector */}
-      {records.length > 1 && (
-        <div className="flex items-center gap-2 p-3 rounded-lg border border-yellow-500/30 bg-yellow-500/5">
-          <Info className="h-4 w-4 text-yellow-500 shrink-0" />
-          <p className="text-sm text-muted-foreground">
-            This customer ID has <strong>{records.length} records</strong> (different states in dataset).
-          </p>
-          <div className="flex gap-1 ml-auto">
-            {records.map((r, i) => (
-              <button
-                key={i}
-                onClick={() => setSelectedIdx(i)}
-                className={cn(
-                  'px-2.5 py-1 rounded text-xs font-medium transition-colors',
-                  selectedIdx === i
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted text-muted-foreground hover:text-foreground'
-                )}
-              >
-                {r.State}
-              </button>
-            ))}
-          </div>
         </div>
       )}
 
@@ -276,7 +246,7 @@ export default function CustomerPage() {
         <div className="text-center py-16 text-muted-foreground">
           <User className="h-12 w-12 mx-auto mb-4 opacity-30" />
           <p className="text-sm">Search for a customer by ID to see their full profile</p>
-          <p className="text-xs mt-1">Customer IDs range from 0 to 2665</p>
+          <p className="text-xs mt-1">Customer IDs range from 0 to 3332</p>
         </div>
       )}
     </div>
