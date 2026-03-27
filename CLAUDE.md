@@ -84,3 +84,32 @@ At the start of each new session:
 1. Read `CLAUDE.md` (loaded automatically)
 2. Read `SESSION_LOG.md` to understand where we left off
 3. Continue from the last entry's pending tasks unless the user says otherwise
+
+### Rule 4: Quality Standard (CRITICAL - NEVER SKIP)
+**Every fix, feature, and implementation MUST follow best practices. NO quick fixes, NO hacks, NO "good enough" solutions.**
+
+When encountering bugs, errors, or issues:
+1. **Research first** - Always do a web search to find the proper, documented solution. Do NOT guess or try random approaches.
+2. **Understand the root cause** - Diagnose WHY it broke, not just patch the symptom.
+3. **Implement the correct fix** - Use the officially documented or community-proven approach.
+4. **Verify it works** - Test the fix before committing.
+5. **Never skip steps** - Do not rush. Do not take shortcuts. Do not say "we'll fix it later."
+
+When writing new code:
+1. **Research before coding** - Look up the best library, pattern, and approach for the task.
+2. **Follow official documentation** - Use documented APIs and patterns, not guesswork.
+3. **Production-grade quality** - Every component should be robust, optimized, accessible, and responsive.
+4. **No half-implementations** - If a feature is started, finish it completely. No TODO placeholders in shipped code.
+5. **Test across browsers and screen sizes** - Chrome, Firefox, Safari, Edge. Mobile, tablet, desktop.
+
+This rule applies equally to:
+- Bug fixes and error resolution
+- New features and components
+- Configuration files (Docker, Caddy, Nginx, etc.)
+- Database schemas and migrations
+- API design and implementation
+- Frontend UI/UX and styling
+- DevOps and deployment
+
+### Rule 5: Roadmap Reference
+All implementation decisions must align with `docs/ROADMAP.md`. Read the relevant section before implementing any feature.
