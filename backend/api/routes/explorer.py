@@ -69,19 +69,61 @@ def data(
     )
 
 
+def _calculate_health_score(record: dict) -> dict:
+    """Calculate customer health score (0-100) with risk factors."""
+    score = 100
+    factors = []
+
+    svc_calls = record.get("Customer service calls", 0)
+    if svc_calls >= 5:
+        score -= 45; factors.append(f"{svc_calls} service calls (critical - 3x+ churn rate)")
+    elif svc_calls == 4:
+        score -= 30; factors.append(f"{svc_calls} service calls (high risk)")
+    elif svc_calls >= 2:
+        score -= 10; factors.append(f"{svc_calls} service calls")
+
+    if record.get("International plan") == "Yes":
+        score -= 20; factors.append("International plan holder (42% churn rate vs 11%)")
+
+    total_charge = sum(
+        float(record.get(f"Total {p} charge", 0))
+        for p in ["day", "eve", "night", "intl"]
+    )
+    if total_charge > 70:
+        score -= 15; factors.append(f"High total charges (${total_charge:.2f})")
+
+    if record.get("Account length", 999) < 30:
+        score -= 10; factors.append("New customer (< 30 days)")
+
+    if record.get("Voice mail plan") == "No":
+        score -= 5; factors.append("No voicemail plan")
+
+    if record.get("Churn"):
+        score -= 30; factors.append("Customer has already churned")
+
+    score = max(0, min(100, score))
+
+    if score >= 70: label, color = "Healthy", "green"
+    elif score >= 40: label, color = "At Risk", "yellow"
+    else: label, color = "Critical", "red"
+
+    return {"score": score, "label": label, "color": color, "factors": factors}
+
+
 @router.get("/customer/{customer_id}")
 def customer_detail(customer_id: int):
-    """Get all records for a customer ID (may have duplicates)."""
-    df = _run_query(f'SELECT * FROM customers WHERE customer_id = {customer_id} ORDER BY "State"')
+    """Get customer record with health score."""
+    df = _run_query(f'SELECT * FROM customers WHERE customer_id = {customer_id}')
     if df.empty:
-        return {"found": False, "records": [], "count": 0}
+        return {"found": False, "record": None, "health": None}
+
+    record = {col: (val.item() if hasattr(val, 'item') else val) for col, val in zip(df.columns, df.iloc[0])}
+    health = _calculate_health_score(record)
+
     return {
         "found": True,
-        "count": len(df),
-        "records": [
-            {col: (val.item() if hasattr(val, 'item') else val) for col, val in zip(df.columns, row)}
-            for row in df.values
-        ],
+        "record": record,
+        "health": health,
     }
 
 

@@ -31,52 +31,17 @@ interface CustomerRecord {
   Churn: boolean
 }
 
-function calculateHealthScore(c: CustomerRecord): { score: number; label: string; color: string; factors: string[] } {
-  let score = 100
-  const factors: string[] = []
-
-  if (c['Customer service calls'] >= 5) {
-    score -= 45; factors.push(`${c['Customer service calls']} service calls (critical - 3x+ churn rate)`)
-  } else if (c['Customer service calls'] === 4) {
-    score -= 30; factors.push(`${c['Customer service calls']} service calls (high risk)`)
-  } else if (c['Customer service calls'] >= 2) {
-    score -= 10; factors.push(`${c['Customer service calls']} service calls`)
-  }
-
-  if (c['International plan'] === 'Yes') {
-    score -= 20; factors.push('International plan holder (42% churn rate vs 11%)')
-  }
-
-  const totalCharge = c['Total day charge'] + c['Total eve charge'] + c['Total night charge'] + c['Total intl charge']
-  if (totalCharge > 70) {
-    score -= 15; factors.push(`High total charges ($${totalCharge.toFixed(2)})`)
-  }
-
-  if (c['Account length'] < 30) {
-    score -= 10; factors.push('New customer (< 30 days)')
-  }
-
-  if (c['Voice mail plan'] === 'No') {
-    score -= 5; factors.push('No voicemail plan')
-  }
-
-  if (c.Churn) {
-    score -= 30; factors.push('Customer has already churned')
-  }
-
-  score = Math.max(0, Math.min(100, score))
-
-  let label: string, color: string
-  if (score >= 70) { label = 'Healthy'; color = 'text-green-500' }
-  else if (score >= 40) { label = 'At Risk'; color = 'text-yellow-500' }
-  else { label = 'Critical'; color = 'text-red-500' }
-
-  return { score, label, color, factors }
+interface HealthScore {
+  score: number
+  label: string
+  color: string
+  factors: string[]
 }
 
 export default function CustomerPage() {
   const [searchId, setSearchId] = useState('')
   const [customer, setCustomer] = useState<CustomerRecord | null>(null)
+  const [health, setHealth] = useState<HealthScore | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -86,11 +51,13 @@ export default function CustomerPage() {
     setLoading(true)
     setError('')
     setCustomer(null)
+    setHealth(null)
     try {
       const res = await fetch(`/api/query/explorer/customer/${id}`)
       const data = await res.json()
-      if (data.found && data.records.length > 0) {
-        setCustomer(data.records[0])
+      if (data.found) {
+        setCustomer(data.record)
+        setHealth(data.health)
       } else {
         setError(`Customer ${id} not found`)
       }
@@ -100,10 +67,14 @@ export default function CustomerPage() {
       setLoading(false)
     }
   }
-  const health = customer ? calculateHealthScore(customer) : null
+
   const totalCharge = customer
     ? customer['Total day charge'] + customer['Total eve charge'] + customer['Total night charge'] + customer['Total intl charge']
     : 0
+
+  const healthColor = health?.color === 'green' ? 'text-green-500'
+    : health?.color === 'yellow' ? 'text-yellow-500'
+    : health?.color === 'red' ? 'text-red-500' : ''
 
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-5xl mx-auto">
@@ -166,10 +137,10 @@ export default function CustomerPage() {
                 </p>
               </div>
 
-              {/* Health Score */}
+              {/* Health Score (from backend) */}
               <div className="text-center shrink-0">
-                <div className={cn('text-3xl font-bold', health.color)}>{health.score}</div>
-                <div className={cn('text-xs font-medium', health.color)}>{health.label}</div>
+                <div className={cn('text-3xl font-bold', healthColor)}>{health.score}</div>
+                <div className={cn('text-xs font-medium', healthColor)}>{health.label}</div>
               </div>
             </div>
           </Card>
@@ -223,7 +194,7 @@ export default function CustomerPage() {
             </Card>
           </div>
 
-          {/* Risk Factors */}
+          {/* Risk Factors (from backend) */}
           {health.factors.length > 0 && (
             <Card className="p-4">
               <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-1.5">
@@ -233,7 +204,7 @@ export default function CustomerPage() {
                 {health.factors.map((f, i) => (
                   <div key={i} className="flex items-center gap-2 text-sm">
                     <div className={cn('h-1.5 w-1.5 rounded-full shrink-0',
-                      health.score >= 70 ? 'bg-green-500' : health.score >= 40 ? 'bg-yellow-500' : 'bg-red-500'
+                      health.color === 'green' ? 'bg-green-500' : health.color === 'yellow' ? 'bg-yellow-500' : 'bg-red-500'
                     )} />
                     {f}
                   </div>
