@@ -2,45 +2,109 @@
 
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { TrendingDown, Users, UserMinus, MapPin, Clock, Lightbulb } from 'lucide-react'
+import { TrendingDown, Users, UserMinus, MapPin, Clock, Lightbulb, FileText, Loader2, Map } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { getKPIs, getInsights, getCharts } from '@/lib/api'
+import { getKPIs, getInsights, getCharts, getStateMapData, getExecutiveSummary } from '@/lib/api'
 import type { KPIData, ChartData } from '@/lib/types'
 import { PlotlyChart } from '@/components/chat/PlotlyChart'
+import { ChatMarkdown } from '@/components/chat/ChatMarkdown'
 import { AnimatedCounter } from '@/components/dashboard/AnimatedCounter'
+import { ChoroplethMap } from '@/components/dashboard/ChoroplethMap'
 
 const container = {
   hidden: {},
   show: { transition: { staggerChildren: 0.08 } },
 }
-
 const item = {
   hidden: { opacity: 0, y: 16 },
   show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' } },
+}
+
+interface StateMapData {
+  state: string
+  churn_rate: number
+  total_customers: number
+  churned: number
 }
 
 export default function DashboardPage() {
   const [kpis, setKpis] = useState<KPIData | null>(null)
   const [insights, setInsights] = useState<string[]>([])
   const [charts, setCharts] = useState<ChartData[]>([])
+  const [stateMap, setStateMap] = useState<StateMapData[]>([])
   const [loading, setLoading] = useState(true)
+
+  // Executive summary
+  const [summary, setSummary] = useState<string | null>(null)
+  const [summaryLoading, setSummaryLoading] = useState(false)
 
   useEffect(() => {
     Promise.all([
       getKPIs().then(setKpis),
       getInsights().then(d => setInsights(d.insights)),
       getCharts().then(d => setCharts(d.charts)),
+      getStateMapData().then(d => setStateMap(d.states)).catch(() => {}),
     ]).finally(() => setLoading(false))
   }, [])
+
+  const handleGenerateSummary = async () => {
+    setSummaryLoading(true)
+    try {
+      const res = await getExecutiveSummary()
+      setSummary(res.summary)
+    } catch {
+      setSummary('Failed to generate summary. Please try again.')
+    } finally {
+      setSummaryLoading(false)
+    }
+  }
 
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
-      <div>
-        <h1 className="text-lg font-bold tracking-tight">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">At-a-glance overview of your telecom customer data.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-lg font-bold tracking-tight">Dashboard</h1>
+          <p className="text-sm text-muted-foreground">At-a-glance overview of your telecom customer data.</p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleGenerateSummary}
+          disabled={summaryLoading}
+          className="gap-2"
+        >
+          {summaryLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
+          {summaryLoading ? 'Generating...' : 'AI Summary'}
+        </Button>
       </div>
+
+      {/* Executive Summary (when generated) */}
+      {summary && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-lg border border-primary/30 bg-primary/5 p-4"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <FileText className="h-4 w-4 text-primary" />
+              <h2 className="text-sm font-bold">AI Executive Summary</h2>
+            </div>
+            <button
+              onClick={() => setSummary(null)}
+              className="text-xs text-muted-foreground hover:text-foreground"
+            >
+              Dismiss
+            </button>
+          </div>
+          <div className="text-sm">
+            <ChatMarkdown content={summary} />
+          </div>
+        </motion.div>
+      )}
 
       {/* KPI Row */}
       {loading ? (
@@ -50,12 +114,7 @@ export default function DashboardPage() {
           ))}
         </div>
       ) : kpis && (
-        <motion.div
-          className="grid grid-cols-2 md:grid-cols-5 gap-3"
-          variants={container}
-          initial="hidden"
-          animate="show"
-        >
+        <motion.div className="grid grid-cols-2 md:grid-cols-5 gap-3" variants={container} initial="hidden" animate="show">
           <motion.div variants={item}>
             <KPICard icon={Users} label="Total Customers" format="number" value={kpis.total_customers} />
           </motion.div>
@@ -74,13 +133,24 @@ export default function DashboardPage() {
         </motion.div>
       )}
 
+      {/* Choropleth Map */}
+      {stateMap.length > 0 && (
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+          <Card>
+            <CardContent className="p-2 sm:p-4">
+              <div className="flex items-center gap-2 mb-2 px-2">
+                <Map className="h-4 w-4 text-primary" />
+                <h2 className="text-sm font-bold">Churn Rate by State</h2>
+              </div>
+              <ChoroplethMap data={stateMap} height={380} />
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
       {/* Insights */}
       {insights.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, duration: 0.4 }}
-        >
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
           <div className="flex items-center gap-2 mb-3">
             <Lightbulb className="h-4 w-4 text-primary" />
             <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Key Insights</h2>
@@ -103,23 +173,12 @@ export default function DashboardPage() {
           ))}
         </div>
       ) : (
-        <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 gap-4"
-          variants={container}
-          initial="hidden"
-          animate="show"
-        >
+        <motion.div className="grid grid-cols-1 md:grid-cols-2 gap-4" variants={container} initial="hidden" animate="show">
           {charts.map(chart => (
             <motion.div key={chart.id} variants={item}>
               <Card className="overflow-hidden">
                 <CardContent className="p-2">
-                  <PlotlyChart
-                    chartType={chart.chart_type}
-                    columns={chart.columns}
-                    data={chart.data}
-                    config={chart.chart_config}
-                    height={320}
-                  />
+                  <PlotlyChart chartType={chart.chart_type} columns={chart.columns} data={chart.data} config={chart.chart_config} height={320} />
                 </CardContent>
               </Card>
             </motion.div>

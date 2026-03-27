@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, Table2, Menu, X, SquarePen,
-  LogOut, Pin, Search, Settings, Trash2, MoreHorizontal, Pencil, Star,
+  LogOut, Pin, Search, Settings, Trash2, MoreHorizontal, Pencil, Star, UserCircle,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils'
 
 const NAV_ITEMS = [
   { label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
+  { label: 'Customer 360', icon: UserCircle, href: '/customer' },
   { label: 'Data Explorer', icon: Table2, href: '/explorer' },
 ]
 

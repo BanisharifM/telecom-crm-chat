@@ -46,3 +46,13 @@ export async function getExplorerData(params: Record<string, string>): Promise<E
   const qs = new URLSearchParams(params).toString()
   return fetchAPI<ExplorerData>(`/explorer/data?${qs}`)
 }
+
+// Choropleth map data
+export async function getStateMapData(): Promise<{ states: { state: string; churn_rate: number; total_customers: number; churned: number }[] }> {
+  return fetchAPI<any>('/dashboard/state-map')
+}
+
+// AI Executive Summary
+export async function getExecutiveSummary(): Promise<{ summary: string }> {
+  return fetchAPI<{ summary: string }>('/dashboard/executive-summary')
+}

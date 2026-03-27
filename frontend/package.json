@@ -41,6 +41,7 @@
     "rehype-highlight": "^7.0.0",
     "react-plotly.js": "^2.6.0",
     "plotly.js-basic-dist-min": "^2.35.0",
+    "plotly.js-geo-dist": "^2.35.0",
     "swr": "^2.2.5",
     "sonner": "^1.7.0",
     "react-textarea-autosize": "^8.5.0",

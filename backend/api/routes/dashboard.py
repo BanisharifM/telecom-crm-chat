@@ -107,3 +107,105 @@ def charts():
     result.append(_df_to_chart(df, "churn_pie", "Customer Churn Breakdown", "pie", {"x": "status", "y": "count"}))
 
     return ChartsResponse(charts=result)
+
+
+@router.get("/state-map")
+def state_map():
+    """Get state-level data for choropleth map."""
+    df = _run_query("""
+        SELECT "State" as state, churn_rate_pct as churn_rate,
+               total_customers, churned
+        FROM state_summary ORDER BY "State"
+    """)
+    states = []
+    for _, row in df.iterrows():
+        states.append({
+            "state": row["state"],
+            "churn_rate": float(row["churn_rate"]),
+            "total_customers": int(row["total_customers"]),
+            "churned": int(row["churned"]),
+        })
+    return {"states": states}
+
+
+@router.get("/executive-summary")
+def executive_summary():
+    """Generate AI executive summary from CRM data."""
+    from app.core.llm import create_client
+    from backend.api.deps import get_app_settings
+
+    settings = get_app_settings()
+    client = create_client(settings)
+
+    # Gather key metrics
+    kpi_df = _run_query("SELECT * FROM overall_kpis")
+    kpi = kpi_df.iloc[0]
+
+    top_states = _run_query('SELECT "State", churn_rate_pct, total_customers FROM state_summary ORDER BY churn_rate_pct DESC LIMIT 5')
+    bottom_states = _run_query('SELECT "State", churn_rate_pct, total_customers FROM state_summary ORDER BY churn_rate_pct ASC LIMIT 5')
+
+    intl_plan = _run_query("""
+        SELECT "International plan", SUM(total_customers) as total,
+               ROUND((SUM(total_customers * churn_rate_pct) / SUM(total_customers))::numeric, 1) as churn_rate
+        FROM plan_summary GROUP BY "International plan"
+    """)
+
+    svc_calls = _run_query("""
+        SELECT "Customer service calls", churn_rate_pct
+        FROM service_calls_churn ORDER BY "Customer service calls"
+    """)
+
+    revenue = _run_query("""
+        SELECT CASE WHEN "Churn" THEN 'Churned' ELSE 'Active' END as status,
+               ROUND(AVG("Total day charge" + "Total eve charge" + "Total night charge" + "Total intl charge")::numeric, 2) as avg_total_charge,
+               COUNT(*) as count
+        FROM customers GROUP BY status
+    """)
+
+    # Build context
+    context = f"""
+CRM Data Summary:
+- Total customers: {int(float(kpi['total_customers']))}
+- Total churned: {int(float(kpi['total_churned']))}
+- Overall churn rate: {float(kpi['churn_rate_pct'])}%
+- States covered: {int(float(kpi['num_states']))}
+- Average account tenure: {float(kpi['avg_account_length'])} days
+
+Top 5 churn states:
+{top_states.to_string(index=False)}
+
+Bottom 5 churn states:
+{bottom_states.to_string(index=False)}
+
+International plan impact:
+{intl_plan.to_string(index=False)}
+
+Service calls vs churn:
+{svc_calls.to_string(index=False)}
+
+Revenue by churn status:
+{revenue.to_string(index=False)}
+"""
+
+    response = client.chat.completions.create(
+        model=settings.llm_model,
+        max_tokens=800,
+        temperature=0,
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    "You are a telecom CRM analyst writing an executive summary for a VP of Customer Success. "
+                    "Be concise, use specific numbers, and provide actionable recommendations. "
+                    "Use markdown: ### headings, **bold** for key numbers, bullet lists. "
+                    "Do not use em dashes. Do not wrap names in backticks."
+                ),
+            },
+            {
+                "role": "user",
+                "content": f"Write a concise executive summary of this telecom CRM data. Include: overall health, key risks, notable insights, and 2-3 recommended actions.\n\n{context}",
+            },
+        ],
+    )
+
+    return {"summary": response.choices[0].message.content}
