@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, Table2, Menu, X, SquarePen,
-  LogOut, Pin, Search, Settings,
+  LogOut, Pin, Search, Settings, Trash2, MoreHorizontal, Pencil, Star,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -22,9 +22,12 @@ interface Props {
   conversations?: { id: string; title: string; pinned: boolean; updatedAt: string }[]
   onNewChat?: () => void
   onSignOut?: () => void
+  onDeleteChat?: (id: string) => void
+  onRenameChat?: (id: string, title: string) => void
+  onPinChat?: (id: string, pinned: boolean) => void
 }
 
-export function AppSidebar({ user, conversations = [], onNewChat, onSignOut }: Props) {
+export function AppSidebar({ user, conversations = [], onNewChat, onSignOut, onDeleteChat, onRenameChat, onPinChat }: Props) {
   const pathname = usePathname()
   const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -128,6 +131,9 @@ export function AppSidebar({ user, conversations = [], onNewChat, onSignOut }: P
                 conv={conv}
                 active={pathname === `/chat/${conv.id}`}
                 onClick={() => { router.push(`/chat/${conv.id}`); setMobileOpen(false) }}
+                onDelete={() => onDeleteChat?.(conv.id)}
+                onRename={(title) => onRenameChat?.(conv.id, title)}
+                onPin={() => onPinChat?.(conv.id, !conv.pinned)}
               />
             ))}
           </div>
@@ -143,6 +149,9 @@ export function AppSidebar({ user, conversations = [], onNewChat, onSignOut }: P
                 conv={conv}
                 active={pathname === `/chat/${conv.id}`}
                 onClick={() => { router.push(`/chat/${conv.id}`); setMobileOpen(false) }}
+                onDelete={() => onDeleteChat?.(conv.id)}
+                onRename={(title) => onRenameChat?.(conv.id, title)}
+                onPin={() => onPinChat?.(conv.id, !conv.pinned)}
               />
             ))}
           </div>
@@ -241,23 +250,104 @@ export function AppSidebar({ user, conversations = [], onNewChat, onSignOut }: P
   )
 }
 
-function ConversationItem({ conv, active, onClick }: {
+function ConversationItem({ conv, active, onClick, onDelete, onRename, onPin }: {
   conv: { id: string; title: string; pinned: boolean }
   active: boolean
   onClick: () => void
+  onDelete: () => void
+  onRename: (title: string) => void
+  onPin: () => void
 }) {
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [renaming, setRenaming] = useState(false)
+  const [renameValue, setRenameValue] = useState(conv.title)
+
+  const handleRename = () => {
+    if (renameValue.trim() && renameValue !== conv.title) {
+      onRename(renameValue.trim())
+    }
+    setRenaming(false)
+  }
+
+  if (renaming) {
+    return (
+      <div className="px-2 py-1">
+        <input
+          autoFocus
+          value={renameValue}
+          onChange={e => setRenameValue(e.target.value)}
+          onBlur={handleRename}
+          onKeyDown={e => {
+            if (e.key === 'Enter') handleRename()
+            if (e.key === 'Escape') setRenaming(false)
+          }}
+          className="w-full bg-white/10 border border-sidebar-accent/40 rounded px-2 py-1.5 text-xs text-white focus:outline-none"
+        />
+      </div>
+    )
+  }
+
   return (
-    <button
-      onClick={onClick}
-      className={cn(
-        'w-full flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-left transition-colors truncate',
-        active
-          ? 'bg-white/10 text-white'
-          : 'text-sidebar-foreground hover:bg-white/5 hover:text-white'
+    <div className={cn(
+      'group relative flex items-center rounded-lg transition-colors',
+      active
+        ? 'bg-white/10 text-white'
+        : 'text-sidebar-foreground hover:bg-white/5 hover:text-white'
+    )}>
+      <button
+        onClick={onClick}
+        className="flex-1 flex items-center gap-2 pl-3 pr-8 py-2 text-sm text-left min-w-0"
+      >
+        {conv.pinned && <Pin className="h-3 w-3 shrink-0 text-sidebar-accent" />}
+        {/* Fade truncation like Claude */}
+        <span className="relative overflow-hidden whitespace-nowrap flex-1">
+          {conv.title}
+          <span className={cn(
+            'absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l',
+            active ? 'from-white/10' : 'from-sidebar group-hover:from-white/[0.03]'
+          )} />
+        </span>
+      </button>
+
+      {/* Three-dot menu button */}
+      <button
+        onClick={(e) => { e.stopPropagation(); setMenuOpen(!menuOpen) }}
+        className={cn(
+          'absolute right-1 shrink-0 flex items-center justify-center w-7 h-7 rounded text-sidebar-foreground/30 hover:text-white hover:bg-white/10 transition-colors',
+          menuOpen ? 'flex' : 'hidden group-hover:flex'
+        )}
+        aria-label="Chat options"
+      >
+        <MoreHorizontal className="h-4 w-4" />
+      </button>
+
+      {/* Dropdown menu */}
+      {menuOpen && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
+          <div className="absolute right-0 top-full z-20 mt-1 w-40 rounded-lg bg-[#1a2236] border border-white/10 shadow-xl py-1 text-xs">
+            <button
+              onClick={() => { setMenuOpen(false); setRenaming(true); setRenameValue(conv.title) }}
+              className="w-full flex items-center gap-2 px-3 py-2 text-sidebar-foreground hover:bg-white/10 hover:text-white transition-colors"
+            >
+              <Pencil className="h-3 w-3" /> Rename
+            </button>
+            <button
+              onClick={() => { setMenuOpen(false); onPin() }}
+              className="w-full flex items-center gap-2 px-3 py-2 text-sidebar-foreground hover:bg-white/10 hover:text-white transition-colors"
+            >
+              <Star className="h-3 w-3" /> {conv.pinned ? 'Unpin' : 'Pin'}
+            </button>
+            <div className="my-1 border-t border-white/10" />
+            <button
+              onClick={() => { setMenuOpen(false); onDelete() }}
+              className="w-full flex items-center gap-2 px-3 py-2 text-red-400 hover:bg-red-400/10 transition-colors"
+            >
+              <Trash2 className="h-3 w-3" /> Delete
+            </button>
+          </div>
+        </>
       )}
-    >
-      {conv.pinned && <Pin className="h-3 w-3 shrink-0 text-sidebar-accent" />}
-      <span className="truncate">{conv.title}</span>
-    </button>
+    </div>
   )
 }
