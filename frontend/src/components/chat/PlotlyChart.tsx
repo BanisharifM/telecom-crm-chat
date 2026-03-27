@@ -128,18 +128,49 @@ function PlotlyChartInner({ chartType, columns, data, config, height = 350 }: Pr
       marker: { size: 8, color: COLORS[0] },
     }]
   } else {
-    // Bar chart
-    plotData = [{
-      type: 'bar',
-      x: xData,
-      y: yData,
-      marker: { color: COLORS[0] },
-      textposition: showBarText ? 'outside' as const : 'none' as const,
-      texttemplate: showBarText ? '%{y:.1f}' : undefined,
-      textfont: { color: mutedColor, size: 11 },
-      outsidetextfont: { color: mutedColor, size: 11 },
-      cliponaxis: false,  // Prevents text clipping at top
-    }]
+    // Bar chart - check if color grouping is requested
+    const colorCol = config.color
+    const colorIdx = colorCol ? columns.indexOf(colorCol) : -1
+
+    if (colorIdx >= 0) {
+      // Grouped bar chart: split data by color column value
+      const groups = new Map<string, { x: any[]; y: any[] }>()
+      data.forEach(row => {
+        const group = String(row[colorIdx])
+        if (!groups.has(group)) groups.set(group, { x: [], y: [] })
+        groups.get(group)!.x.push(row[xIdx])
+        groups.get(group)!.y.push(row[yIdx])
+      })
+
+      plotData = Array.from(groups.entries()).map(([name, vals], i) => ({
+        type: 'bar' as const,
+        name,
+        x: vals.x,
+        y: vals.y,
+        marker: { color: COLORS[i % COLORS.length] },
+        textposition: showBarText ? 'outside' as const : 'none' as const,
+        texttemplate: showBarText ? '%{y:.1f}' : undefined,
+        textfont: { color: mutedColor, size: 11 },
+        outsidetextfont: { color: mutedColor, size: 11 },
+        cliponaxis: false,
+      }))
+      layout.showlegend = true
+      layout.legend = { font: { color: mutedColor, size: 11 } }
+      layout.barmode = 'group'
+    } else {
+      // Single color bar chart
+      plotData = [{
+        type: 'bar',
+        x: xData,
+        y: yData,
+        marker: { color: COLORS[0] },
+        textposition: showBarText ? 'outside' as const : 'none' as const,
+        texttemplate: showBarText ? '%{y:.1f}' : undefined,
+        textfont: { color: mutedColor, size: 11 },
+        outsidetextfont: { color: mutedColor, size: 11 },
+        cliponaxis: false,
+      }]
+    }
   }
 
   return (
