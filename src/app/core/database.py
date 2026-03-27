@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 TABLE_NAME = "customers"
 
 COLUMN_DEFINITIONS = """CREATE TABLE customers (
-    "customer_id" INTEGER,              -- Unique customer identifier (0-2665, some duplicates from merged dataset)
+    "customer_id" INTEGER,              -- Unique customer identifier (0-3332, all unique after data cleaning)
     "State" VARCHAR,                    -- US state abbreviation (51 states incl. DC, e.g. 'KS', 'OH', 'CA')
     "Account length" INTEGER,           -- Number of days the account has been active (1-243)
     "Area code" INTEGER,                -- Phone area code: 408, 415, or 510
