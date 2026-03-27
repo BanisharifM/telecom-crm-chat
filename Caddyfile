@@ -1,10 +1,12 @@
 telecomco.chat {
-    # Frontend (Next.js)
-    reverse_proxy frontend:3000
-
-    # Backend API
+    # Backend API — must come before frontend catch-all
     handle /api/* {
         reverse_proxy backend:8000
+    }
+
+    # Frontend (Next.js) — catch-all
+    handle {
+        reverse_proxy frontend:3000
     }
 
     # Security headers
@@ -16,6 +18,5 @@ telecomco.chat {
         -Server
     }
 
-    # Gzip compression
     encode gzip
 }

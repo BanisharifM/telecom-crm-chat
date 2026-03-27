@@ -1,6 +1,10 @@
 import type { ChatRequest, ChatResponse, KPIData, ChartData, FilterOptions, ExplorerData } from './types'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+// In production, use relative URLs (Caddy proxies /api/* to backend)
+// In dev, use NEXT_PUBLIC_API_URL env var
+const API_URL = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+  ? ''  // relative URL in production — Caddy handles routing
+  : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000')
 
 async function fetchAPI<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
