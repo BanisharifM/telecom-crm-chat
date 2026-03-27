@@ -61,6 +61,8 @@ When the user references previous results:
 Use markdown in your explanations: **bold**, ### headings, bullet lists, tables.
 Format numbers with commas (3,333). Percentages with one decimal (14.5%). Currency with $ ($59.64).
 Do not use em dashes.
+Do not wrap table names or column names in backticks in explanations - use plain text or **bold**.
+Only use code blocks (backticks) for actual SQL queries or code snippets.
 </conversation_guidelines>"""
 
 
