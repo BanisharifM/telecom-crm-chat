@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useSession } from 'next-auth/react'
 import {
   MessageSquare, BarChart3, Shield, Zap, ArrowRight, ChevronRight,
   Menu, X, Users, TrendingDown, Phone, Globe,
@@ -15,6 +16,7 @@ const NAV_LINKS = [
 
 export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const { data: session } = useSession()
 
   return (
     <div className="min-h-screen bg-[#030712] text-white">
@@ -47,15 +49,29 @@ export default function LandingPage() {
 
           {/* Desktop auth */}
           <div className="hidden md:flex items-center gap-3">
-            <Link href="/login" className="text-sm text-gray-300 hover:text-white transition-colors">
-              Log In
-            </Link>
-            <Link
-              href="/login"
-              className="text-sm bg-[#0AA4B0] text-white font-medium px-5 py-2 rounded-lg hover:bg-[#089da6] transition-colors"
-            >
-              Get Started
-            </Link>
+            {session?.user ? (
+              <Link
+                href="/dashboard"
+                className="flex items-center gap-2 text-sm bg-[#0AA4B0] text-white font-medium px-5 py-2 rounded-lg hover:bg-[#089da6] transition-colors"
+              >
+                {session.user.image && (
+                  <img src={session.user.image} alt="" className="h-5 w-5 rounded-full" />
+                )}
+                Go to Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link href="/login" className="text-sm text-gray-300 hover:text-white transition-colors">
+                  Log In
+                </Link>
+                <Link
+                  href="/login"
+                  className="text-sm bg-[#0AA4B0] text-white font-medium px-5 py-2 rounded-lg hover:bg-[#089da6] transition-colors"
+                >
+                  Get Started
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile hamburger */}
@@ -82,20 +98,32 @@ export default function LandingPage() {
               </a>
             ))}
             <div className="pt-3 border-t border-white/10 mt-2 space-y-2">
-              <Link
-                href="/login"
-                className="block text-center text-sm text-gray-300 hover:text-white py-2"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Log In
-              </Link>
-              <Link
-                href="/login"
-                className="block text-center text-sm bg-[#0AA4B0] text-white font-medium py-3 rounded-lg hover:bg-[#089da6] transition-colors"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Get Started Free
-              </Link>
+              {session?.user ? (
+                <Link
+                  href="/dashboard"
+                  className="block text-center text-sm bg-[#0AA4B0] text-white font-medium py-3 rounded-lg hover:bg-[#089da6] transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Go to Dashboard
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    href="/login"
+                    className="block text-center text-sm text-gray-300 hover:text-white py-2"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Log In
+                  </Link>
+                  <Link
+                    href="/login"
+                    className="block text-center text-sm bg-[#0AA4B0] text-white font-medium py-3 rounded-lg hover:bg-[#089da6] transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Get Started Free
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         )}

@@ -1,25 +1,29 @@
 'use client'
 
+import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { AppSidebar } from '@/components/layout/AppSidebar'
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
+  const { data: session, status } = useSession()
   const router = useRouter()
 
-  // TODO: Replace with real auth session and conversation list
-  const mockUser = { name: 'Demo User', email: 'demo@telecomco.chat', image: null }
-  const mockConversations = [
-    { id: 'demo-1', title: 'Churn analysis', pinned: true, updatedAt: new Date().toISOString() },
-    { id: 'demo-2', title: 'Revenue by state', pinned: false, updatedAt: new Date().toISOString() },
-  ]
+  // TODO: Replace with real conversation list from API
+  const conversations: { id: string; title: string; pinned: boolean; updatedAt: string }[] = []
+
+  const user = session?.user ? {
+    name: session.user.name,
+    email: session.user.email || '',
+    image: session.user.image,
+  } : null
 
   return (
     <div className="flex h-screen overflow-hidden">
       <AppSidebar
-        user={mockUser}
-        conversations={mockConversations}
+        user={user}
+        conversations={conversations}
         onNewChat={() => router.push('/chat')}
-        onSignOut={() => {/* TODO: sign out */}}
+        onSignOut={() => signOut({ callbackUrl: '/' })}
       />
       <main className="flex-1 overflow-y-auto">
         {children}

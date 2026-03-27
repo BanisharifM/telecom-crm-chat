@@ -1,12 +1,28 @@
 'use client'
 
+import { signIn, useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardDescription } from '@/components/ui/card'
 
 export default function LoginPage() {
-  const handleGoogleLogin = () => {
-    // TODO: Replace with signIn('google') from next-auth
-    window.location.href = '/api/auth/signin/google'
+  const { data: session, status } = useSession()
+  const router = useRouter()
+
+  // If already logged in, redirect to chat
+  useEffect(() => {
+    if (status === 'authenticated') {
+      router.push('/chat')
+    }
+  }, [status, router])
+
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-pulse text-muted-foreground">Loading...</div>
+      </div>
+    )
   }
 
   return (
@@ -17,11 +33,11 @@ export default function LoginPage() {
           <img src="/logo-light.png" alt="TelecomCo" className="w-64 max-w-full h-auto mx-auto mb-3 dark:hidden block" />
           <CardDescription>Sign in to access AI-powered CRM analytics</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <Button
-            className="w-full"
+            className="w-full h-12 text-base"
             size="lg"
-            onClick={handleGoogleLogin}
+            onClick={() => signIn('google', { callbackUrl: '/chat' })}
           >
             <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24">
               <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
@@ -31,8 +47,8 @@ export default function LoginPage() {
             </svg>
             Continue with Google
           </Button>
-          <p className="text-xs text-center text-muted-foreground mt-4">
-            By signing in, you agree to our Terms of Service.
+          <p className="text-xs text-center text-muted-foreground">
+            By signing in, you agree to our Terms of Service and Privacy Policy.
           </p>
         </CardContent>
       </Card>
