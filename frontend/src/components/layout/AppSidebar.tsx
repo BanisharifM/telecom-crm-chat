@@ -211,7 +211,7 @@ export function AppSidebar({ user, conversations = [], onNewChat, onSignOut, onD
             )}
           </div>
           <span className="text-[9px] text-sidebar-foreground/20">
-            by Mahdi B.
+            by BD
           </span>
         </div>
       </div>

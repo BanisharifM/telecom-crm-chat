@@ -93,7 +93,7 @@ export default function Sidebar({ width }: Props) {
       <Divider sx={{ my: 1 }} />
       <Typography variant="caption" sx={{ textAlign: 'center', color: '#334155', display: 'block' }}>
         Powered by <b style={{ color: '#6366F1' }}>Claude</b> · DuckDB · Plotly
-        <br />Built by Mahdi BanisharifDehkordi
+        <br />Built by BD
       </Typography>
     </Box>
   )

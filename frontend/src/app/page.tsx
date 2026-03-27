@@ -414,7 +414,7 @@ export default function LandingPage() {
           {/* Bottom bar */}
           <div className="mt-10 sm:mt-12 pt-6 sm:pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-gray-600">
             <span>Copyright &copy; {new Date().getFullYear()} TelecomCo Inc. All rights reserved.</span>
-            <span>Built by Mahdi BanisharifDehkordi</span>
+            <span>Built by BD</span>
           </div>
         </div>
       </footer>
