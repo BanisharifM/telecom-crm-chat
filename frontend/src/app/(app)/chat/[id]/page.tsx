@@ -143,7 +143,11 @@ export default function ConversationPage() {
     const blob = new Blob([header + '\n' + rows], { type: 'text/csv' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
-    a.href = url; a.download = 'results.csv'; a.click()
+    // Use chart title or message content for meaningful filename
+    const name = msg.chartConfig?.title
+      || msg.content?.substring(0, 30).replace(/[^a-zA-Z0-9 ]/g, '').trim().replace(/\s+/g, '_')
+      || 'query_results'
+    a.href = url; a.download = `${name}.csv`; a.click()
     URL.revokeObjectURL(url)
   }
 
@@ -151,8 +155,8 @@ export default function ConversationPage() {
   const assistantMessages = messages.filter(m => m.role === 'assistant')
 
   return (
-    <div className="flex h-full">
-      <div className="flex flex-col flex-1 min-w-0">
+    <div className="flex h-full overflow-hidden">
+      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
       {/* Header */}
       <div className="border-b px-4 py-3 md:px-6 shrink-0 flex items-center justify-between">
         <div>

@@ -46,7 +46,7 @@ export function AppSidebar({ user, conversations = [], onNewChat, onSignOut, onD
   }
 
   const sidebar = (
-    <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
+    <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground overflow-hidden">
       {/* Brand */}
       <div className="px-3 pt-3 pb-1 flex justify-center">
         <Link href="/">
@@ -243,7 +243,7 @@ export function AppSidebar({ user, conversations = [], onNewChat, onSignOut, onD
       </aside>
 
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex md:w-72 md:shrink-0">
+      <aside className="hidden md:flex md:w-72 md:shrink-0 md:min-w-[288px]">
         {sidebar}
       </aside>
     </>

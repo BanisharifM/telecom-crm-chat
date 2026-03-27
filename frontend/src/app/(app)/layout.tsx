@@ -83,7 +83,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         onRenameChat={handleRenameChat}
         onPinChat={handlePinChat}
       />
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden">
         {children}
       </main>
     </div>
