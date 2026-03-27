@@ -9,6 +9,7 @@
     "lint": "next lint",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
+    "lighthouse": "lhci autorun",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
@@ -54,6 +55,8 @@
     "postcss": "^8.4.0",
     "autoprefixer": "^10.4.0",
     "prisma": "^6.2.0",
-    "@playwright/test": "^1.49.0"
+    "@playwright/test": "^1.49.0",
+    "@axe-core/playwright": "^4.10.0",
+    "@lhci/cli": "^0.14.0"
   }
 }
