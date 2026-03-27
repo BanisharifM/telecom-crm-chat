@@ -1094,3 +1094,137 @@ For SQL tasks, what matters is:
 3. The last 2-3 exchanges (for follow-ups)
 
 Do NOT blindly stuff all history into the context. Quality over quantity.
+
+---
+
+## 17. Competitive Landscape and Feature Strategy
+
+### Market Research: What Top AI CRM Products Offer
+
+#### Salesforce Einstein AI
+- Einstein Copilot: conversational assistant across Sales/Service/Marketing
+- Lead scoring (1-100), opportunity scoring, deal risk flags
+- Einstein Prediction Builder: no-code custom prediction models (including churn)
+- Einstein Discovery: automated statistical analysis, explains patterns in plain English
+- Tableau integration for NLQ ("Ask Data")
+- Trust Layer: prompt injection defense, PII masking, audit trail
+- Pricing: $165-500/user/month for AI features
+
+#### HubSpot Breeze AI
+- Breeze Copilot: summarize contacts, draft emails, generate reports
+- Breeze Agents: content, social media, prospecting, customer support
+- Predictive lead scoring, AI-powered forecasting
+- Conversation intelligence (call transcription, competitor mentions)
+- AI Report Builder (describe report in English)
+- Pricing: $100-150/user/month for AI features
+
+#### Zoho Zia AI
+- Zia Ask: strongest NLQ in CRM - type questions, get interactive charts
+- Supports follow-up questions (conversation mode)
+- Native churn prediction with explainability
+- Anomaly detection with proactive alerts
+- Data enrichment from public sources
+- Pricing: $50-65/user/month (best value)
+
+#### Microsoft Dynamics 365 Copilot
+- Power BI integration (best-in-class BI tool)
+- Natural language to DAX queries
+- Customer Insights CDP with built-in churn/CLV prediction
+- Narrative visual: AI-generated text explanations
+- Pricing: $105-150/user/month + $1,700/tenant for Customer Insights
+
+#### ThoughtSpot Spotter
+- Search-engine style NLQ with 4.6/5 accuracy rating
+- Full conversation context retention
+- Answer Explainer shows data lineage
+- Multi-step analysis across data sources
+
+### Feature Classification
+
+**MUST-HAVE (every competitor has):**
+1. AI chat/copilot interface
+2. Natural language to data queries
+3. Interactive charts and dashboards
+4. Data tables with export (CSV/Excel)
+5. KPI cards with trend indicators
+6. Mobile responsive design
+7. Dark/light mode
+
+**DIFFERENTIATOR (only top products have):**
+1. NLQ with conversation context (Zoho, ThoughtSpot, Dynamics)
+2. Churn prediction with explainability (Zoho, Dynamics - only 2 of 7)
+3. Anomaly detection with proactive alerts (Zoho, Dynamics)
+4. AI-generated chart explanations in plain English (Salesforce)
+5. Transparent SQL showing the query behind the answer (none - our unique feature)
+6. Follow-up question suggestions after each response (Zoho, ThoughtSpot)
+7. Thumbs up/down feedback on AI responses
+
+**OUR COMPETITIVE ADVANTAGES:**
+1. Open-source / self-hosted option (no competitor offers this)
+2. Transparent SQL (builds trust - no competitor shows the query)
+3. Instant setup (upload data, start querying - no weeks of setup)
+4. LLM-agnostic via OpenRouter (no vendor lock-in)
+5. Conversational drill-down with context retention
+6. 10-100x cheaper than competitors ($0 self-hosted vs $150-500/user/month)
+7. Rich markdown responses with inline charts (unique combination)
+
+### Features to Implement (Priority Order)
+
+#### P0 - Core (Phase 1-2)
+- [x] Natural language to SQL queries
+- [x] Interactive Plotly charts inline in chat
+- [x] Data tables with CSV download
+- [ ] Conversation history persistence (PostgreSQL)
+- [ ] Google OAuth login
+- [ ] Multi-conversation support (sidebar)
+- [ ] Rich markdown rendering in responses
+- [ ] Dark/light theme toggle
+
+#### P1 - Competitive Parity (Phase 3-4)
+- [ ] KPI dashboard with trend arrows and sparklines
+- [ ] Follow-up question suggestions (2-3 chips after each response)
+- [ ] Media gallery (Charts/Files/Queries tabs in info panel)
+- [ ] Auto chart type selection with user override
+- [ ] Transparent SQL (collapsible "Show query" section)
+- [ ] Thumbs up/down feedback on responses
+- [ ] Anomaly highlighting on dashboard
+- [ ] Suggested questions in empty state (categorized)
+
+#### P2 - Differentiator (Phase 5+)
+- [ ] Churn prediction with explainability
+- [ ] Customer health scoring (traffic light: red/yellow/green)
+- [ ] Anomaly detection with proactive alerts
+- [ ] PDF report generation and export
+- [ ] Scheduled email reports
+- [ ] Chart explanations in plain English
+- [ ] Voice input for queries
+- [ ] Conversation search across all chats
+
+### UX Patterns to Follow
+
+**Empty State (First Visit):**
+- Welcome message with product description
+- 4-6 categorized sample queries as clickable chips
+- Categories: "Sales metrics", "Churn analysis", "Customer segments", "Billing"
+- Each example demonstrates a different capability
+
+**Follow-Up Suggestions:**
+- 2-3 contextual suggestion chips below each AI response
+- Generated based on the current answer (e.g., after churn by state: "Which state has most improvement?", "Break down by plan type", "Show customer details for top state")
+
+**Feedback Loop:**
+- Thumbs up/down on every AI response
+- Thumbs down opens optional text field for reason
+- Feedback stored in database for quality improvement
+
+**Progressive Disclosure:**
+- Show answer first (text + chart)
+- Collapsible "Show SQL query" section
+- Collapsible "Show raw data" table
+- "Download CSV" and "Download chart" buttons
+
+**Dashboard Layout:**
+- Top row: 5 KPI cards (customers, churned, churn rate, states, avg tenure)
+- Each card: big number + trend arrow + sparkline + delta
+- Middle: 2x2 chart grid (state churn, plan comparison, service calls, churn pie)
+- Bottom: key insights as cards with indigo left border
