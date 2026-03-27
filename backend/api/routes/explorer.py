@@ -69,6 +69,22 @@ def data(
     )
 
 
+@router.get("/customer/{customer_id}")
+def customer_detail(customer_id: int):
+    """Get all records for a customer ID (may have duplicates)."""
+    df = _run_query(f'SELECT * FROM customers WHERE customer_id = {customer_id} ORDER BY "State"')
+    if df.empty:
+        return {"found": False, "records": [], "count": 0}
+    return {
+        "found": True,
+        "count": len(df),
+        "records": [
+            {col: (val.item() if hasattr(val, 'item') else val) for col, val in zip(df.columns, row)}
+            for row in df.values
+        ],
+    }
+
+
 @router.get("/download")
 def download(
     state: str = Query("All"),

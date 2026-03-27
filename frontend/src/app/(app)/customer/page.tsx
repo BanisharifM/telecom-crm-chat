@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Search, User, Phone, Globe, Mail, Shield, AlertTriangle, CheckCircle, TrendingUp } from 'lucide-react'
-import { Card, CardContent } from '@/components/ui/card'
+import { useState } from 'react'
+import { Search, User, Phone, Globe, Shield, AlertTriangle, CheckCircle, TrendingUp, Info } from 'lucide-react'
+import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { cn, formatNumber } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 
-interface CustomerData {
+interface CustomerRecord {
   customer_id: number
   State: string
   'Account length': number
@@ -31,54 +31,40 @@ interface CustomerData {
   Churn: boolean
 }
 
-function calculateHealthScore(c: CustomerData): { score: number; label: string; color: string; factors: string[] } {
+function calculateHealthScore(c: CustomerRecord): { score: number; label: string; color: string; factors: string[] } {
   let score = 100
   const factors: string[] = []
 
-  // Service calls penalty (strong churn indicator)
   if (c['Customer service calls'] >= 4) {
-    score -= 30
-    factors.push(`${c['Customer service calls']} service calls (high risk)`)
+    score -= 30; factors.push(`${c['Customer service calls']} service calls (high risk - 3x churn rate)`)
   } else if (c['Customer service calls'] >= 2) {
-    score -= 10
-    factors.push(`${c['Customer service calls']} service calls`)
+    score -= 10; factors.push(`${c['Customer service calls']} service calls`)
   }
 
-  // International plan penalty (42% churn rate vs 11%)
   if (c['International plan'] === 'Yes') {
-    score -= 20
-    factors.push('International plan holder (higher churn risk)')
+    score -= 20; factors.push('International plan holder (42% churn rate vs 11%)')
   }
 
-  // High charges penalty
   const totalCharge = c['Total day charge'] + c['Total eve charge'] + c['Total night charge'] + c['Total intl charge']
   if (totalCharge > 70) {
-    score -= 15
-    factors.push(`High total charges ($${totalCharge.toFixed(2)})`)
+    score -= 15; factors.push(`High total charges ($${totalCharge.toFixed(2)})`)
   }
 
-  // Short tenure penalty
   if (c['Account length'] < 30) {
-    score -= 10
-    factors.push('New customer (< 30 days)')
+    score -= 10; factors.push('New customer (< 30 days)')
   }
 
-  // No voicemail plan
   if (c['Voice mail plan'] === 'No') {
-    score -= 5
-    factors.push('No voicemail plan')
+    score -= 5; factors.push('No voicemail plan')
   }
 
-  // Already churned
   if (c.Churn) {
-    score -= 30
-    factors.push('Customer has already churned')
+    score -= 30; factors.push('Customer has already churned')
   }
 
   score = Math.max(0, Math.min(100, score))
 
-  let label: string
-  let color: string
+  let label: string, color: string
   if (score >= 70) { label = 'Healthy'; color = 'text-green-500' }
   else if (score >= 40) { label = 'At Risk'; color = 'text-yellow-500' }
   else { label = 'Critical'; color = 'text-red-500' }
@@ -88,36 +74,25 @@ function calculateHealthScore(c: CustomerData): { score: number; label: string; 
 
 export default function CustomerPage() {
   const [searchId, setSearchId] = useState('')
-  const [customer, setCustomer] = useState<CustomerData | null>(null)
+  const [records, setRecords] = useState<CustomerRecord[]>([])
+  const [selectedIdx, setSelectedIdx] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
   const handleSearch = async () => {
     const id = parseInt(searchId)
-    if (isNaN(id)) { setError('Enter a valid customer ID (number)'); return }
+    if (isNaN(id) || id < 0) { setError('Enter a valid customer ID (0-2665)'); return }
     setLoading(true)
     setError('')
+    setRecords([])
+    setSelectedIdx(0)
     try {
-      const res = await fetch(`/api/query/explorer/data?page_size=10&page=1`)
-      // Use a direct query to find the customer
-      const queryRes = await fetch('/api/query/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          question: `Show all data for customer_id ${id}`,
-          conversation_history: [],
-        }),
-      })
-      const data = await queryRes.json()
-      if (data.success && data.data?.length > 0) {
-        const row = data.data[0]
-        const cols = data.columns
-        const obj: any = {}
-        cols.forEach((col: string, i: number) => { obj[col] = row[i] })
-        setCustomer(obj as CustomerData)
+      const res = await fetch(`/api/query/explorer/customer/${id}`)
+      const data = await res.json()
+      if (data.found && data.records.length > 0) {
+        setRecords(data.records)
       } else {
         setError(`Customer ${id} not found`)
-        setCustomer(null)
       }
     } catch {
       setError('Failed to load customer data')
@@ -126,6 +101,7 @@ export default function CustomerPage() {
     }
   }
 
+  const customer = records[selectedIdx] || null
   const health = customer ? calculateHealthScore(customer) : null
   const totalCharge = customer
     ? customer['Total day charge'] + customer['Total eve charge'] + customer['Total night charge'] + customer['Total intl charge']
@@ -133,7 +109,6 @@ export default function CustomerPage() {
 
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-5xl mx-auto">
-      {/* Header */}
       <div>
         <h1 className="text-lg font-bold tracking-tight">Customer 360</h1>
         <p className="text-sm text-muted-foreground">Complete view of a single customer's profile, usage, and risk.</p>
@@ -167,6 +142,32 @@ export default function CustomerPage() {
         </div>
       )}
 
+      {/* Duplicate records selector */}
+      {records.length > 1 && (
+        <div className="flex items-center gap-2 p-3 rounded-lg border border-yellow-500/30 bg-yellow-500/5">
+          <Info className="h-4 w-4 text-yellow-500 shrink-0" />
+          <p className="text-sm text-muted-foreground">
+            This customer ID has <strong>{records.length} records</strong> (different states in dataset).
+          </p>
+          <div className="flex gap-1 ml-auto">
+            {records.map((r, i) => (
+              <button
+                key={i}
+                onClick={() => setSelectedIdx(i)}
+                className={cn(
+                  'px-2.5 py-1 rounded text-xs font-medium transition-colors',
+                  selectedIdx === i
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-muted-foreground hover:text-foreground'
+                )}
+              >
+                {r.State}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {customer && health && (
         <>
           {/* Identity Header */}
@@ -188,7 +189,9 @@ export default function CustomerPage() {
                     {customer.Churn ? 'Churned' : 'Active'}
                   </span>
                 </div>
-                <p className="text-sm text-muted-foreground">{customer.State} - Area Code {customer['Area code']} - Tenure: {customer['Account length']} days</p>
+                <p className="text-sm text-muted-foreground">
+                  {customer.State} - Area Code {customer['Area code']} - Tenure: {customer['Account length']} days
+                </p>
               </div>
 
               {/* Health Score */}
@@ -200,7 +203,7 @@ export default function CustomerPage() {
           </Card>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* Plan Subscriptions */}
+            {/* Plans */}
             <Card className="p-4">
               <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-1.5">
                 <Globe className="h-3.5 w-3.5" /> Plans
@@ -215,7 +218,7 @@ export default function CustomerPage() {
               </div>
             </Card>
 
-            {/* Usage Summary */}
+            {/* Usage */}
             <Card className="p-4">
               <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-1.5">
                 <Phone className="h-3.5 w-3.5" /> Usage
@@ -248,7 +251,7 @@ export default function CustomerPage() {
             </Card>
           </div>
 
-          {/* Health Factors */}
+          {/* Risk Factors */}
           {health.factors.length > 0 && (
             <Card className="p-4">
               <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-1.5">
@@ -257,7 +260,9 @@ export default function CustomerPage() {
               <div className="space-y-1.5">
                 {health.factors.map((f, i) => (
                   <div key={i} className="flex items-center gap-2 text-sm">
-                    <div className={cn('h-1.5 w-1.5 rounded-full shrink-0', health.score >= 70 ? 'bg-green-500' : health.score >= 40 ? 'bg-yellow-500' : 'bg-red-500')} />
+                    <div className={cn('h-1.5 w-1.5 rounded-full shrink-0',
+                      health.score >= 70 ? 'bg-green-500' : health.score >= 40 ? 'bg-yellow-500' : 'bg-red-500'
+                    )} />
                     {f}
                   </div>
                 ))}
