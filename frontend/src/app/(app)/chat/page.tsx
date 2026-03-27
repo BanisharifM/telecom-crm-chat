@@ -97,8 +97,8 @@ export default function ChatPage() {
         {messages.length === 0 && !loading && (
           <div className="max-w-2xl mx-auto pt-8 animate-fade-in">
             <div className="text-center mb-8">
-              <div className="text-4xl mb-3">📱</div>
-              <h2 className="text-xl font-bold">Welcome to TelecomCo CRM Chat</h2>
+              <img src="/logo-horizontal.png" alt="TelecomCo" className="h-12 w-auto mx-auto mb-4 dark:block hidden" />
+              <img src="/logo-light.png" alt="TelecomCo" className="h-12 w-auto mx-auto mb-4 dark:hidden block" />
               <p className="text-muted-foreground mt-1">
                 Ask questions about <strong>3,333 telecom customers</strong> - churn, billing, service calls, and more.
               </p>

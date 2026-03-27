@@ -4,30 +4,30 @@
 
 @layer base {
   :root {
-    /* Light theme */
+    /* Light theme - derived from TelecomCo brand colors */
     --background: 210 40% 98%;
-    --foreground: 222 84% 5%;
+    --foreground: 215 50% 10%;
     --card: 0 0% 100%;
-    --card-foreground: 222 84% 5%;
-    --primary: 239 84% 67%;
+    --card-foreground: 215 50% 10%;
+    --primary: 170 41% 42%;       /* Teal #2BB5A0 from logo */
     --primary-foreground: 0 0% 100%;
-    --secondary: 217 91% 60%;
+    --secondary: 210 50% 30%;     /* Dark blue #1B3A5C from logo */
     --secondary-foreground: 0 0% 100%;
     --muted: 210 40% 96%;
     --muted-foreground: 215 16% 47%;
-    --accent: 210 40% 96%;
-    --accent-foreground: 222 84% 5%;
+    --accent: 170 30% 95%;
+    --accent-foreground: 215 50% 10%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     --border: 214 32% 91%;
     --input: 214 32% 91%;
-    --ring: 239 84% 67%;
+    --ring: 170 41% 42%;
     --radius: 0.75rem;
 
-    /* Sidebar (dark even in light mode) */
-    --sidebar: 222 47% 11%;
-    --sidebar-foreground: 210 40% 96%;
-    --sidebar-accent: 239 84% 67%;
+    /* Sidebar (dark navy even in light mode - matches logo) */
+    --sidebar: 216 56% 10%;       /* #0A1628 from logo bg */
+    --sidebar-foreground: 210 40% 80%;
+    --sidebar-accent: 170 41% 42%;
 
     /* Semantic */
     --success: 160 84% 39%;
@@ -35,47 +35,47 @@
     --danger: 0 84% 60%;
     --info: 189 94% 43%;
 
-    /* Charts */
-    --chart-1: 239 84% 67%;
-    --chart-2: 217 91% 60%;
-    --chart-3: 160 84% 39%;
-    --chart-4: 0 84% 60%;
-    --chart-5: 38 92% 50%;
+    /* Charts - teal-forward palette matching brand */
+    --chart-1: 170 41% 42%;      /* Teal (primary brand) */
+    --chart-2: 210 50% 40%;      /* Blue */
+    --chart-3: 160 84% 39%;      /* Green */
+    --chart-4: 0 84% 60%;        /* Red */
+    --chart-5: 38 92% 50%;       /* Amber */
   }
 
   .dark {
-    --background: 222 47% 5%;
-    --foreground: 210 40% 96%;
-    --card: 222 47% 9%;
-    --card-foreground: 210 40% 96%;
-    --primary: 239 84% 67%;
+    --background: 216 56% 6%;     /* Deep navy from logo */
+    --foreground: 210 40% 92%;
+    --card: 216 45% 10%;
+    --card-foreground: 210 40% 92%;
+    --primary: 170 41% 42%;       /* Teal #2BB5A0 */
     --primary-foreground: 0 0% 100%;
-    --secondary: 217 91% 60%;
+    --secondary: 195 60% 50%;     /* Lighter teal for dark mode */
     --secondary-foreground: 0 0% 100%;
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 217 33% 17%;
-    --accent-foreground: 210 40% 96%;
+    --muted: 216 40% 15%;
+    --muted-foreground: 215 20% 60%;
+    --accent: 216 40% 15%;
+    --accent-foreground: 210 40% 92%;
     --destructive: 0 63% 31%;
     --destructive-foreground: 0 0% 100%;
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 239 84% 67%;
+    --border: 216 35% 18%;
+    --input: 216 35% 18%;
+    --ring: 170 41% 42%;
 
-    --sidebar: 222 47% 7%;
-    --sidebar-foreground: 215 20% 65%;
-    --sidebar-accent: 239 84% 67%;
+    --sidebar: 216 56% 6%;        /* Same as bg in dark mode */
+    --sidebar-foreground: 215 20% 60%;
+    --sidebar-accent: 170 41% 42%;
 
     --success: 160 84% 39%;
     --warning: 38 92% 50%;
     --danger: 0 84% 60%;
     --info: 189 94% 43%;
 
-    --chart-1: 239 84% 67%;
-    --chart-2: 217 91% 60%;
-    --chart-3: 160 84% 39%;
+    --chart-1: 170 50% 50%;      /* Brighter teal for dark bg */
+    --chart-2: 210 70% 55%;
+    --chart-3: 160 84% 45%;
     --chart-4: 0 84% 60%;
-    --chart-5: 38 92% 50%;
+    --chart-5: 38 92% 55%;
   }
 }
 

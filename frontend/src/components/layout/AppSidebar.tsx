@@ -32,12 +32,12 @@ export function AppSidebar({ user, conversations = [], onNewChat, onSignOut }: P
   const sidebar = (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
       {/* Brand */}
-      <div className="px-4 py-5 text-center">
-        <div className="text-2xl">📱</div>
-        <div className="text-base font-bold text-white tracking-tight">TelecomCo CRM</div>
-        <div className="text-[10px] uppercase tracking-[0.15em] text-sidebar-foreground/50">
-          AI Data Assistant
-        </div>
+      <div className="px-4 py-4">
+        <img
+          src="/logo-horizontal.png"
+          alt="TelecomCo"
+          className="h-10 w-auto mx-auto"
+        />
       </div>
 
       <Separator className="bg-white/10" />

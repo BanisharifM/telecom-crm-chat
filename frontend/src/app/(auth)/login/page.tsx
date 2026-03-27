@@ -13,9 +13,8 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
-          <div className="text-4xl mb-2">📱</div>
-          <CardTitle className="text-xl">TelecomCo CRM</CardTitle>
-          <CardDescription>Sign in to access CRM analytics</CardDescription>
+          <img src="/logo-horizontal.png" alt="TelecomCo" className="h-10 w-auto mx-auto mb-2" />
+          <CardDescription>Sign in to access AI-powered CRM analytics</CardDescription>
         </CardHeader>
         <CardContent>
           <Button

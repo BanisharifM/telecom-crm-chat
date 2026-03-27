@@ -10,8 +10,12 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: 'TelecomCo CRM - AI Data Assistant',
+  title: 'TelecomCo CRM - AI-Powered Insights',
   description: 'Natural language chat interface for telecom CRM data analytics',
+  icons: {
+    icon: '/favicon.png',
+    apple: '/favicon.png',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
