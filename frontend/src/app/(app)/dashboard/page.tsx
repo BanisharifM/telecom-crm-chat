@@ -39,7 +39,7 @@ export default function DashboardPage() {
   // Executive summary - persisted, always visible at top when exists
   const [summary, setSummary] = useState<string | null>(null)
   const [summaryTime, setSummaryTime] = useState<string | null>(null)
-  const [summaryOpen, setSummaryOpen] = useState(true)
+  const [summaryOpen, setSummaryOpen] = useState(false)
   const [summaryLoading, setSummaryLoading] = useState(false)
 
   useEffect(() => {
