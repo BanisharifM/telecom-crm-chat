@@ -1,13 +1,13 @@
 telecomco.chat {
     # FastAPI backend
-    # Browser requests /api/query/health -> Caddy strips /query -> backend gets /api/health
-    route /api/query/* {
-        uri path_regexp /api/query(.*) /api$1
+    # /api/query/health -> strip /api/query -> /health -> rewrite -> /api/health -> backend
+    handle_path /api/query/* {
+        rewrite * /api{uri}
         reverse_proxy backend:8000
     }
 
     # Next.js frontend
-    route {
+    handle {
         reverse_proxy frontend:3000
     }
 
