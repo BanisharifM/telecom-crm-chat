@@ -55,6 +55,7 @@ node_modules/
 frontend/node_modules/
 frontend/.next/
 frontend/out/
+frontend/frontend/
 npm-debug.log*
 
 # Docker
