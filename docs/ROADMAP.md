@@ -1228,3 +1228,339 @@ Do NOT blindly stuff all history into the context. Quality over quantity.
 - Each card: big number + trend arrow + sparkline + delta
 - Middle: 2x2 chart grid (state churn, plan comparison, service calls, churn pie)
 - Bottom: key insights as cards with indigo left border
+
+---
+
+## 18. Text-to-SQL Strategy (Near-Zero Error)
+
+### Current Accuracy Assessment
+
+Our system uses Claude Sonnet via OpenRouter with:
+- 6 few-shot examples (good, within optimal 3-8 range)
+- JSON output format with regex parsing
+- sqlglot validation + fuzzy column fixing
+- 3 retries with error feedback
+- temperature=0
+
+Estimated current accuracy: ~85%. Target: **96-97%**.
+
+### Improvement 1: XML-Structured Prompt (HIGH IMPACT)
+
+Claude is specifically optimized for XML tags. Restructure the system prompt:
+
+```xml
+<schema>CREATE TABLE customers (...)</schema>
+<summary_tables>Full CREATE TABLE for each summary table</summary_tables>
+<rules>Numbered rules list</rules>
+<sample_data>3-5 representative rows from customers table</sample_data>
+<column_value_examples>Valid values for each column</column_value_examples>
+<common_mistakes>Known error patterns and corrections</common_mistakes>
+<follow_up_instructions>How to handle conversational context</follow_up_instructions>
+<chart_selection_guide>When to use bar/line/pie/table/metric</chart_selection_guide>
+<edge_cases>Greetings, help, impossible questions</edge_cases>
+<output_format>JSON schema specification</output_format>
+<examples>6-8 categorized examples</examples>
+```
+
+Expected improvement: +5% accuracy.
+
+### Improvement 2: Sample Data Rows (HIGH IMPACT)
+
+Add 3-5 representative rows showing actual data patterns:
+- Include a churned customer (Churn=true)
+- Include an international plan holder
+- Include different states and area codes
+- Shows the LLM what real values look like
+
+Research shows 15-20% accuracy improvement from sample data.
+
+### Improvement 3: Column Value Examples (HIGH IMPACT)
+
+```xml
+<column_value_examples>
+- "State": KS, OH, NJ, CA, TX, NY, FL (51 US states + DC, 2-letter codes)
+- "Area code": 408, 415, 510 (only these three values)
+- "International plan": 'Yes', 'No' (VARCHAR, not boolean)
+- "Voice mail plan": 'Yes', 'No' (VARCHAR, not boolean)
+- "Churn": true, false (BOOLEAN, NOT 'Yes'/'No')
+- "Customer service calls": integer 0 through 9
+</column_value_examples>
+```
+
+Prevents: `WHERE "State" = 'California'` (should be `'CA'`).
+
+### Improvement 4: Structured Outputs (MEDIUM IMPACT)
+
+Instead of JSON-in-prompt with regex parsing, use Claude's structured output:
+
+```python
+from pydantic import BaseModel, Literal
+
+class SQLResponse(BaseModel):
+    sql: str
+    explanation: str
+    chart_type: Literal["bar","line","pie","scatter","heatmap","table","metric","none"]
+    chart_config: dict
+```
+
+Eliminates entire class of JSON parsing errors.
+
+### Improvement 5: Error Classification (MEDIUM IMPACT)
+
+Classify errors before retry for targeted hints:
+- **syntax**: Check quotes, parentheses, DuckDB syntax
+- **schema**: Verify exact column names, double-quoting
+- **type_mismatch**: Churn is BOOLEAN, plans are VARCHAR
+- **performance**: Simplify query, use summary tables
+- **runtime**: Check GROUP BY includes all non-aggregated columns
+
+### Improvement 6: Column Validation (MEDIUM IMPACT)
+
+VALID_COLUMNS set exists but is never checked in validation.
+Add column-level validation in `_validate_structure()`.
+
+### Improvement 7: Missing Few-Shot Examples
+
+Current examples are missing:
+- **Compound filter**: "customers in CA with international plan who churned"
+- **Comparison/conditional**: "compare churn rate for customers with >3 service calls vs <=3"
+- **Top-N with computed column**: "top 5 states by average total bill"
+
+Add these to reach 8-9 total examples covering all query patterns.
+
+### Improvement 8: Follow-Up Instructions
+
+Add explicit guidance for conversation context:
+```xml
+<follow_up_instructions>
+- "Now show that as a pie chart" -> Reuse previous SQL, change chart_type
+- "Filter that by state X" -> Add WHERE clause to previous SQL
+- "What about for churned customers?" -> Add WHERE "Churn" = true
+- Always generate complete, standalone SQL
+</follow_up_instructions>
+```
+
+### Improvement 9: Self-Verification Instruction
+
+Add to prompt:
+```
+Before outputting, mentally verify:
+- Are all column names exact-matched and double-quoted?
+- Is Churn compared with true/false (not 'Yes'/'No')?
+- Does the query answer the original question?
+- Is there a LIMIT clause?
+```
+
+### Improvement 10: Test Suite
+
+Create 40+ test cases across categories:
+- **Simple** (10): single-value metrics, counts
+- **Medium** (15): aggregations, filters, comparisons
+- **Complex** (10): compound filters, computed columns, CTEs
+- **Edge** (10): greetings, impossible questions, follow-ups
+
+Use **execution accuracy** (does it run and return correct results?) not exact SQL match.
+
+### Expected Accuracy Path
+
+| Stage | Accuracy | Key Technique |
+|-------|----------|---------------|
+| Current | ~85% | Baseline |
+| + XML prompt + sample data + value examples | ~90% | Better prompt |
+| + Structured outputs | ~93% | Eliminate parse errors |
+| + Error classification + column validation | ~95% | Better error recovery |
+| + Missing examples + follow-ups + self-verify | ~96-97% | Complete coverage |
+
+### LLM Response Formatting Rules
+
+Add to system prompt:
+```
+Response formatting rules:
+- Use markdown: ### headings, **bold**, bullet lists, tables
+- Use --- for horizontal rules between sections
+- Do NOT use em dashes. Use regular dashes or "to" instead.
+- Use emoji sparingly, only for section header icons
+- Format numbers: commas for thousands (3,333), one decimal for percentages (14.5%)
+- Format currency: dollar sign with two decimals ($59.64)
+- Format SQL in fenced code blocks with ```sql
+```
+
+---
+
+## 19. Performance and Optimization
+
+### Chart/Image Handling
+
+**Plotly Bundle Reduction (CRITICAL):**
+- Full plotly.js: 3.5MB (1.1MB gzipped)
+- `plotly.js-basic-dist-min`: 1MB (350KB gzipped) -- covers bar, pie, scatter, heatmap
+- Use factory pattern: `createPlotlyComponent(Plotly)` from react-plotly.js/factory
+- **70% bundle size reduction** with zero functionality loss
+
+**Lazy Loading Charts:**
+- Use Intersection Observer to render charts only when visible
+- Show skeleton placeholder until chart enters viewport
+- `next/dynamic` with `ssr: false` and loading skeleton
+
+**Chart Caching:**
+- Hash query + data as cache key
+- Store rendered chart config (JSON) in cache
+- Identical queries return cached config (skip LLM + DB)
+- TTL: 5-15 minutes
+
+**Chart Image Export (for gallery):**
+- Server-side: Kaleido (Python) -- sub-second PNG/SVG/WebP generation
+- Client-side: `Plotly.toImage()` for on-demand download
+- Thumbnails: generate at 400x300 for gallery grid
+- Storage: S3-compatible or local filesystem with presigned URLs
+
+### Next.js Performance
+
+**Server Components (CRITICAL):**
+- Dashboard layout, navigation, static content: Server Components (zero JS to client)
+- Chat input, charts, theme toggle: Client Components (need browser APIs)
+- Plotly charts: Client only (`ssr: false`)
+
+**Streaming SSR with Suspense (CRITICAL):**
+```tsx
+<Suspense fallback={<KPISkeleton />}>
+  <KPICards />  {/* Streams independently when data ready */}
+</Suspense>
+<Suspense fallback={<ChartSkeleton />}>
+  <ChurnChart />  {/* Streams independently */}
+</Suspense>
+```
+- Static shell (layout, nav) renders instantly
+- Components stream in as data resolves
+- 50-70% improvement in perceived load time
+
+**Parallel Data Fetching:**
+```typescript
+const [kpis, charts, table] = await Promise.all([
+  getKPIs(), getChartData(), getTableData()
+])
+```
+
+**Route Prefetching:**
+- `<Link>` automatically prefetches when visible (production)
+- Near-instant navigation (sub-100ms)
+
+**Font Optimization:**
+- `next/font` self-hosts Google Fonts at build time
+- Zero external font requests
+- Font subsetting: only Latin characters (60-80% size reduction)
+
+### Bundle Size Budget
+
+| Resource | Budget | Technique |
+|----------|--------|-----------|
+| Total JS (first load) | <300KB gzipped | Code splitting, dynamic imports |
+| Plotly | <400KB gzipped | plotly.js-basic-dist-min |
+| CSS | <50KB gzipped | Tailwind purge |
+| Fonts (Inter) | <30KB | Subsetting |
+| LCP | <2.5s | Streaming SSR, priority images |
+| CLS | <0.1 | Font swap, image dimensions |
+
+### Caching Strategy
+
+| Layer | What | TTL | Tool |
+|-------|------|-----|------|
+| Browser | Static assets (JS, CSS, fonts) | 1 year | Cache-Control immutable |
+| Browser | API responses (KPIs, charts) | 30s | stale-while-revalidate |
+| Client | Data fetching | 5-30s | SWR or TanStack Query |
+| Server | Route cache | Per-page | Next.js Full Route Cache |
+| API | Dashboard endpoints | 30-60s | HTTP Cache-Control + ETag |
+| API | Repeated queries | 5-15min | Redis or in-memory hash cache |
+| DB | Aggregations | On-demand refresh | PostgreSQL materialized views |
+
+### Data Table Performance
+
+- Server-side pagination (50 rows/page) for our 3,333 row dataset
+- @tanstack/react-table for headless table logic (sorting, filtering)
+- Sticky headers with CSS `position: sticky`
+- CSV export generated server-side (streaming download)
+
+### Security
+
+- **CSP headers**: Via Caddy configuration
+- **Rate limiting**: 10 AI queries/min, 30 data queries/min per IP (slowapi)
+- **SQL injection**: sqlglot validation + parameterized queries
+- **XSS**: rehype-sanitize for LLM markdown output
+- **CORS**: Whitelist production domain only
+- **Secrets**: Never prefix with `NEXT_PUBLIC_`, use `server-only` package
+
+---
+
+## 20. CRM Feature Roadmap
+
+### Tier 1: Must-Have Features
+
+| # | Feature | Difficulty | Phase |
+|---|---------|------------|-------|
+| 1 | Customer 360 View (single customer profile page) | Medium | 3 |
+| 2 | Customer Segmentation (by usage, plan, risk) | Medium | 3 |
+| 3 | Account Health Scoring (composite: service calls + usage + plan) | Medium | 3 |
+| 4 | Churn Prediction with Risk Scores (ML model on labeled data) | Hard | 4 |
+| 5 | Churn Reason Analysis (feature importance ranking) | Medium | 4 |
+| 6 | At-Risk Customer Alerts (flag high-risk customers) | Medium | 4 |
+| 7 | Churn by Segment Drill-Down (interactive filtering) | Easy | 3 |
+| 8 | Revenue Breakdown by Segment/Plan/State | Easy | 3 |
+| 9 | ARPU Analysis (average revenue per user by segment) | Easy | 3 |
+| 10 | Revenue at Risk (dollar value of predicted churners) | Medium | 4 |
+| 11 | Service Call Analysis (distribution, churn correlation) | Easy | 3 |
+| 12 | Automated Insight Generation (LLM produces top N insights) | Medium | 3 |
+| 13 | Anomaly Detection (flag outlier customers/patterns) | Medium | 4 |
+| 14 | What-If Scenario Analysis ("reduce intl charges by 20%") | Medium | 4 |
+| 15 | Correlation Discovery (feature importance for churn) | Medium | 4 |
+| 16 | Data Quality Dashboard (missing values, duplicates, distributions) | Easy | 2 |
+| 17 | Data Dictionary / Metadata Browser | Easy | 2 |
+| 18 | Column Statistics (histograms, summary stats) | Easy | 2 |
+| 19 | Pre-Built Report Templates (executive, churn, revenue) | Medium | 3 |
+| 20 | Interactive Drill-Through (click chart element to see records) | Medium | 3 |
+| 21 | Follow-up Question Suggestions (2-3 chips after each response) | Easy | 2 |
+| 22 | Thumbs Up/Down Feedback on AI responses | Easy | 2 |
+| 23 | Geographic Choropleth Map (churn/revenue by state) | Easy | 3 |
+
+### Tier 2: Differentiator Features
+
+| # | Feature | Difficulty | Phase |
+|---|---------|------------|-------|
+| 1 | Prescriptive Analytics ("do X to reduce churn by Y%") | Medium | 5 |
+| 2 | Sankey Diagram (customer flow: plan -> churn status) | Medium | 5 |
+| 3 | Heatmap (usage patterns, correlations) | Easy | 5 |
+| 4 | Radar/Spider Chart (multi-dimensional customer profiles) | Easy | 5 |
+| 5 | Waterfall Chart (revenue breakdown) | Easy | 5 |
+| 6 | AI Executive Summary (one-click dashboard summary) | Medium | 5 |
+| 7 | PDF Report Generation | Medium | 5 |
+| 8 | Multi-Modal Input (upload chart screenshot, ask questions) | Medium | 6 |
+| 9 | Audience Segmentation Builder (visual query builder) | Medium | 6 |
+| 10 | Embeddable Charts (API-driven chart rendering) | Medium | 6 |
+
+### Features to Skip (Not Relevant for Our Data)
+
+- Customer journey mapping (no event data)
+- CAC tracking (no marketing spend)
+- Activity timeline (no timestamps)
+- Survival analysis (no tenure dates)
+- Campaign effectiveness (no campaign data)
+- A/B testing (no experiment data)
+- AR/VR visualization (not practical)
+- Federated learning (overkill)
+
+---
+
+## Appendix B: Advanced Visualization Types
+
+| Chart | Library | Use Case | Difficulty |
+|-------|---------|----------|------------|
+| Choropleth map | Plotly `choropleth` | Churn/revenue by state | Easy |
+| Sankey | Plotly `sankey` | Customer flow: plan -> churn | Medium |
+| Heatmap | Plotly `heatmap` | Correlation matrix, usage patterns | Easy |
+| Treemap | Plotly `treemap` | Revenue hierarchy | Easy |
+| Radar | Plotly `scatterpolar` | Customer profiles | Easy |
+| Waterfall | Plotly `waterfall` | Revenue breakdown | Easy |
+| Funnel | Plotly `funnel` | Customer pipeline | Easy |
+| Box plot | Plotly `box` | Distribution comparison | Easy |
+| Violin | Plotly `violin` | Detailed distributions | Easy |
+
+All supported by `plotly.js-basic-dist-min` or `plotly.js-cartesian-dist-min`.
