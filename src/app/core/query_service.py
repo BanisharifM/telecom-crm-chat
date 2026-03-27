@@ -126,12 +126,35 @@ def process_question(
                 logger.error(f"Retry generation failed: {e}")
                 break
 
+    # Instead of showing a raw error, ask LLM to explain what went wrong
+    # and suggest alternatives
     elapsed = (time.time() - start) * 1000
+    try:
+        clarification = client.chat.completions.create(
+            model=settings.llm_model,
+            max_tokens=512,
+            temperature=0,
+            messages=[
+                {"role": "system", "content": "You are a helpful CRM data assistant. The user asked a question but the SQL query failed. Explain briefly what went wrong and suggest 2-3 simpler alternative questions they could ask instead. Be friendly and helpful. Use markdown formatting."},
+                {"role": "user", "content": f"My question was: \"{question}\"\n\nThe error was: {last_error}\n\nPlease help me rephrase this or suggest alternatives."},
+            ],
+        )
+        helpful_msg = clarification.choices[0].message.content
+    except Exception:
+        helpful_msg = (
+            f"I had trouble with that query. Here are some alternatives you could try:\n\n"
+            f"- Break it into simpler questions\n"
+            f"- Be more specific about which columns or states you want\n"
+            f"- Try asking for one thing at a time\n\n"
+            f"*Technical detail: {last_error}*"
+        )
+
     return QueryResult(
-        success=False,
+        success=True,  # Mark as success so UI renders the explanation nicely
         question=question,
         sql=sql,
-        error=f"I wasn't able to generate a valid query after {settings.max_retries} attempts. "
-        f"Last error: {last_error}",
+        explanation=helpful_msg,
+        chart_type="none",
+        chart_config={},
         query_time_ms=round(elapsed, 1),
     )
