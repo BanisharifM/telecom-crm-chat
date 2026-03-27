@@ -13,8 +13,8 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
-          <img src="/logo-dark-badge.png" alt="TelecomCo" className="w-56 h-auto mx-auto mb-2 rounded-lg hidden dark:block" />
-          <img src="/logo-light.png" alt="TelecomCo" className="w-56 h-auto mx-auto mb-2 dark:hidden block" />
+          <img src="/logo-dark-badge.png" alt="TelecomCo" className="w-64 max-w-full h-auto mx-auto mb-3 rounded-xl hidden dark:block" />
+          <img src="/logo-light.png" alt="TelecomCo" className="w-64 max-w-full h-auto mx-auto mb-3 dark:hidden block" />
           <CardDescription>Sign in to access AI-powered CRM analytics</CardDescription>
         </CardHeader>
         <CardContent>
