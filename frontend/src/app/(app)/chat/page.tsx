@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Send, Loader2, Copy, Download, ChevronDown, ChevronUp, Image } from 'lucide-react'
+import { Loader2, Copy, Download, ChevronDown, ChevronUp, Image } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -15,6 +15,7 @@ import { DateSeparator, shouldShowDateSeparator } from '@/components/chat/DateSe
 import { ScrollToBottom } from '@/components/chat/ScrollToBottom'
 import { MessageActions } from '@/components/chat/MessageActions'
 import { InfoPanel } from '@/components/chat/InfoPanel'
+import { ChatInput } from '@/components/chat/ChatInput'
 
 interface DisplayMessage {
   id: string
@@ -246,25 +247,12 @@ export default function NewChatPage() {
 
         {/* Input */}
         <div className="border-t px-4 py-3 md:px-6 shrink-0">
-          <div className="max-w-3xl mx-auto flex gap-2">
-            <textarea
-              ref={inputRef}
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault()
-                  handleSend()
-                }
-              }}
-              placeholder="Ask about churn, billing, service calls..."
-              rows={1}
-              className="flex-1 resize-none rounded-lg border border-input bg-background px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring placeholder:text-muted-foreground"
-            />
-            <Button onClick={() => handleSend()} disabled={!input.trim() || loading} size="icon" className="h-10 w-10 shrink-0">
-              <Send className="h-4 w-4" />
-            </Button>
-          </div>
+          <ChatInput
+            value={input}
+            onChange={setInput}
+            onSubmit={() => handleSend()}
+            disabled={loading}
+          />
         </div>
       </div>
 
@@ -313,7 +301,11 @@ function MessageBubble({ msg, onDownloadCSV }: { msg: DisplayMessage; onDownload
         'rounded-xl px-4 py-3 border',
         msg.role === 'user' ? 'bg-primary/5 border-primary/20 ml-8' : 'bg-card border-border mr-8'
       )}>
-        <ChatMarkdown content={msg.content} />
+        {msg.role === 'user' ? (
+          <p className="whitespace-pre-wrap text-sm">{msg.content}</p>
+        ) : (
+          <ChatMarkdown content={msg.content} />
+        )}
 
         {msg.sqlQuery && !msg.sqlQuery.startsWith('SELECT 1') && <SQLViewer sql={msg.sqlQuery} />}
 

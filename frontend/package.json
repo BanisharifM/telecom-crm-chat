@@ -43,6 +43,7 @@
     "plotly.js-basic-dist-min": "^2.35.0",
     "swr": "^2.2.5",
     "sonner": "^1.7.0",
+    "react-textarea-autosize": "^8.5.0",
     "date-fns": "^4.1.0",
     "framer-motion": "^11.14.0"
   },
