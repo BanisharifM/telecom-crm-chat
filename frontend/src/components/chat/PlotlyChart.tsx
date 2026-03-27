@@ -1,9 +1,23 @@
 'use client'
 
 import dynamic from 'next/dynamic'
+import { useState, useEffect } from 'react'
 
-// Exact brand colors from Fig1.png: teal #0AA4B0, dark blue #0A3963
-const COLORS = ['#0AA4B0', '#0A3963', '#10B981', '#EF4444', '#F59E0B', '#3B82F6', '#EC4899', '#8B5CF6']
+// Brand colors from Fig1.png
+const COLORS = ['#0AA4B0', '#3B82F6', '#10B981', '#EF4444', '#F59E0B', '#8B5CF6', '#EC4899', '#F97316']
+
+// Detect dark mode by observing the <html> class
+function useDarkMode(): boolean {
+  const [isDark, setIsDark] = useState(false)
+  useEffect(() => {
+    const check = () => setIsDark(document.documentElement.classList.contains('dark'))
+    check()
+    const observer = new MutationObserver(check)
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+    return () => observer.disconnect()
+  }, [])
+  return isDark
+}
 
 interface Props {
   chartType: string
@@ -14,11 +28,10 @@ interface Props {
 }
 
 function PlotlyChartInner({ chartType, columns, data, config, height = 350 }: Props) {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const createPlotlyComponent = require('react-plotly.js/factory').default
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const Plotly = require('plotly.js-basic-dist-min')
   const Plot = createPlotlyComponent(Plotly)
+  const isDark = useDarkMode()
 
   const x = config.x || columns[0]
   const y = config.y || columns[1]
@@ -27,45 +40,103 @@ function PlotlyChartInner({ chartType, columns, data, config, height = 350 }: Pr
   const xData = data.map(r => r[xIdx])
   const yData = data.map(r => r[yIdx])
 
+  // Theme-aware colors
+  const textColor = isDark ? '#E2E8F0' : '#1E293B'
+  const mutedColor = isDark ? '#94A3B8' : '#64748B'
+  const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'
+  const lineColor = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)'
+
+  // Calculate top margin based on whether we show text outside bars
+  const showBarText = chartType === 'bar' && data.length <= 20
+  const topMargin = config.title ? 50 : (showBarText ? 40 : 15)
+
   const layout: any = {
-    title: config.title ? { text: config.title, font: { size: 14 }, x: 0, pad: { l: 0 } } : undefined,
+    title: config.title ? {
+      text: config.title,
+      font: { size: 14, color: textColor },
+      x: 0,
+      pad: { l: 0 },
+    } : undefined,
     paper_bgcolor: 'transparent',
     plot_bgcolor: 'transparent',
-    font: { family: 'Inter, system-ui, sans-serif', size: 12 },
-    margin: { l: 50, r: 20, t: config.title ? 40 : 10, b: 50 },
+    font: {
+      family: 'Inter, system-ui, sans-serif',
+      size: 12,
+      color: mutedColor,
+    },
+    margin: { l: 55, r: 20, t: topMargin, b: 55 },
     height,
     colorway: COLORS,
     bargap: 0.25,
     hovermode: 'x unified' as const,
     showlegend: false,
-    xaxis: { showgrid: false, automargin: true },
-    yaxis: { showgrid: true, gridwidth: 1, automargin: true },
+    xaxis: {
+      showgrid: false,
+      automargin: true,
+      linecolor: lineColor,
+      tickfont: { color: mutedColor, size: 11 },
+      title: { font: { color: mutedColor } },
+    },
+    yaxis: {
+      showgrid: true,
+      gridcolor: gridColor,
+      gridwidth: 1,
+      automargin: true,
+      linecolor: lineColor,
+      tickfont: { color: mutedColor, size: 11 },
+      title: { font: { color: mutedColor } },
+      zerolinecolor: lineColor,
+    },
+    hoverlabel: {
+      bgcolor: isDark ? '#1E293B' : '#FFFFFF',
+      bordercolor: isDark ? '#334155' : '#E2E8F0',
+      font: { color: textColor },
+    },
   }
 
   let plotData: any[]
 
   if (chartType === 'pie') {
     plotData = [{
-      type: 'pie', labels: xData, values: yData, hole: 0.4,
-      marker: { colors: COLORS, line: { width: 2 } },
+      type: 'pie',
+      labels: xData,
+      values: yData,
+      hole: 0.4,
+      marker: { colors: COLORS, line: { color: isDark ? '#0F172A' : '#FFFFFF', width: 2 } },
       textinfo: 'percent+label',
+      textfont: { color: textColor, size: 12 },
+      outsidetextfont: { color: mutedColor },
+      insidetextfont: { color: '#FFFFFF' },
     }]
   } else if (chartType === 'line') {
     plotData = [{
-      type: 'scatter', mode: 'lines+markers', x: xData, y: yData,
-      line: { width: 2.5, color: COLORS[0] }, marker: { size: 6 },
+      type: 'scatter',
+      mode: 'lines+markers',
+      x: xData,
+      y: yData,
+      line: { width: 2.5, color: COLORS[0] },
+      marker: { size: 6, color: COLORS[0] },
     }]
   } else if (chartType === 'scatter') {
     plotData = [{
-      type: 'scatter', mode: 'markers', x: xData, y: yData,
+      type: 'scatter',
+      mode: 'markers',
+      x: xData,
+      y: yData,
       marker: { size: 8, color: COLORS[0] },
     }]
   } else {
+    // Bar chart
     plotData = [{
-      type: 'bar', x: xData, y: yData,
+      type: 'bar',
+      x: xData,
+      y: yData,
       marker: { color: COLORS[0] },
-      textposition: data.length <= 20 ? 'outside' as const : 'none' as const,
-      texttemplate: data.length <= 20 ? '%{y:.1f}' : undefined,
+      textposition: showBarText ? 'outside' as const : 'none' as const,
+      texttemplate: showBarText ? '%{y:.1f}' : undefined,
+      textfont: { color: mutedColor, size: 11 },
+      outsidetextfont: { color: mutedColor, size: 11 },
+      cliponaxis: false,  // Prevents text clipping at top
     }]
   }
 
@@ -80,7 +151,6 @@ function PlotlyChartInner({ chartType, columns, data, config, height = 350 }: Pr
   )
 }
 
-// Dynamic import with SSR disabled (Plotly needs browser APIs)
 export const PlotlyChart = dynamic(
   () => Promise.resolve(PlotlyChartInner),
   {
