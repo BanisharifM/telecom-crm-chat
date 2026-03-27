@@ -126,33 +126,47 @@ def process_question(
                 logger.error(f"Retry generation failed: {e}")
                 break
 
-    # Instead of showing a raw error, ask LLM to explain what went wrong
-    # and suggest alternatives
+    # Graceful failure: ask LLM to diagnose and help user
+    # Pattern: ThoughtSpot (show reasoning) + AmbiSQL (clarification questions)
     elapsed = (time.time() - start) * 1000
     try:
         clarification = client.chat.completions.create(
             model=settings.llm_model,
-            max_tokens=512,
+            max_tokens=600,
             temperature=0,
             messages=[
-                {"role": "system", "content": "You are a helpful CRM data assistant. The user asked a question but the SQL query failed. Explain briefly what went wrong and suggest 2-3 simpler alternative questions they could ask instead. Be friendly and helpful. Use markdown formatting."},
-                {"role": "user", "content": f"My question was: \"{question}\"\n\nThe error was: {last_error}\n\nPlease help me rephrase this or suggest alternatives."},
+                {"role": "system", "content": """You are a helpful CRM data assistant. A SQL query failed after multiple attempts.
+Your job is to help the user get the answer they want. Follow this structure:
+
+1. **What I understood**: Briefly restate what you think the user is asking for
+2. **What went wrong**: Explain the technical issue in simple terms (not raw error)
+3. **How to get your answer**: Either:
+   - Ask a specific clarification question ("Did you mean X or Y?")
+   - Suggest how to rephrase the question to make it answerable
+   - Break the complex question into 2-3 simpler steps they can ask one at a time
+
+Use markdown formatting. Be conversational, not robotic."""},
+                {"role": "user", "content": f"My question: \"{question}\"\n\nThe SQL that was attempted:\n```sql\n{sql}\n```\n\nThe error: {last_error}\n\nAvailable columns: State, Account length, Area code, International plan, Voice mail plan, Total day/eve/night/intl minutes/calls/charge, Customer service calls, Churn (boolean)"},
             ],
         )
         helpful_msg = clarification.choices[0].message.content
     except Exception:
         helpful_msg = (
-            f"I had trouble with that query. Here are some alternatives you could try:\n\n"
-            f"- Break it into simpler questions\n"
-            f"- Be more specific about which columns or states you want\n"
-            f"- Try asking for one thing at a time\n\n"
-            f"*Technical detail: {last_error}*"
+            f"### What I understood\n"
+            f"You asked: \"{question}\"\n\n"
+            f"### What went wrong\n"
+            f"I had trouble generating a valid query for this request.\n\n"
+            f"### How to get your answer\n"
+            f"Try breaking this into simpler steps:\n"
+            f"1. Ask for one metric at a time\n"
+            f"2. Specify exact column names or states\n"
+            f"3. Start simple, then add complexity with follow-up questions"
         )
 
     return QueryResult(
-        success=True,  # Mark as success so UI renders the explanation nicely
+        success=True,
         question=question,
-        sql=sql,
+        sql="",
         explanation=helpful_msg,
         chart_type="none",
         chart_config={},
