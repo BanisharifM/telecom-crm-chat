@@ -2,16 +2,6 @@
 
 import dynamic from 'next/dynamic'
 
-const Plot = dynamic(() => import('react-plotly.js').then((mod) => {
-  // Use factory pattern with basic dist for smaller bundle
-  const createPlotlyComponent = require('react-plotly.js/factory').default
-  const Plotly = require('plotly.js-basic-dist-min')
-  return { default: createPlotlyComponent(Plotly) }
-}), {
-  ssr: false,
-  loading: () => <div className="h-80 animate-pulse rounded-lg bg-muted" />,
-}) as any
-
 const COLORS = ['#6366F1', '#3B82F6', '#10B981', '#EF4444', '#F59E0B', '#06B6D4', '#F97316', '#EC4899']
 
 interface Props {
@@ -22,11 +12,17 @@ interface Props {
   height?: number
 }
 
-export function PlotlyChart({ chartType, columns, data, config, height = 350 }: Props) {
+function PlotlyChartInner({ chartType, columns, data, config, height = 350 }: Props) {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const createPlotlyComponent = require('react-plotly.js/factory').default
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const Plotly = require('plotly.js-basic-dist-min')
+  const Plot = createPlotlyComponent(Plotly)
+
   const x = config.x || columns[0]
   const y = config.y || columns[1]
   const xIdx = Math.max(0, columns.indexOf(x))
-  const yIdx = Math.max(0, columns.indexOf(y) === -1 ? Math.min(1, columns.length - 1) : columns.indexOf(y))
+  const yIdx = columns.indexOf(y) >= 0 ? columns.indexOf(y) : Math.min(1, columns.length - 1)
   const xData = data.map(r => r[xIdx])
   const yData = data.map(r => r[yIdx])
 
@@ -53,7 +49,6 @@ export function PlotlyChart({ chartType, columns, data, config, height = 350 }: 
       marker: { colors: COLORS, line: { width: 2 } },
       textinfo: 'percent+label',
     }]
-    layout.showlegend = false
   } else if (chartType === 'line') {
     plotData = [{
       type: 'scatter', mode: 'lines+markers', x: xData, y: yData,
@@ -83,3 +78,12 @@ export function PlotlyChart({ chartType, columns, data, config, height = 350 }: 
     />
   )
 }
+
+// Dynamic import with SSR disabled (Plotly needs browser APIs)
+export const PlotlyChart = dynamic(
+  () => Promise.resolve(PlotlyChartInner),
+  {
+    ssr: false,
+    loading: () => <div className="h-80 animate-pulse rounded-lg bg-muted" />,
+  }
+)

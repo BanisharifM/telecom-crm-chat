@@ -6,11 +6,19 @@ const nextConfig = {
   },
   images: {
     remotePatterns: [
-      { protocol: 'https', hostname: 'lh3.googleusercontent.com' }, // Google avatars
+      { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
     ],
   },
+  webpack: (config) => {
+    // Alias plotly.js to the smaller basic dist
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      'plotly.js/dist/plotly': 'plotly.js-basic-dist-min',
+      'plotly.js': 'plotly.js-basic-dist-min',
+    }
+    return config
+  },
   async rewrites() {
-    // In Docker, proxy /api/query/* to FastAPI backend
     const apiUrl = process.env.BACKEND_URL || 'http://localhost:8000'
     return [
       {
