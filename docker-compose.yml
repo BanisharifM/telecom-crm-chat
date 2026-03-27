@@ -20,8 +20,7 @@ services:
     build: ./frontend
     ports:
       - "3000:3000"
-    environment:
-      - NEXT_PUBLIC_API_URL=http://backend:8000
+    env_file: .env
     depends_on:
       backend:
         condition: service_healthy
@@ -40,6 +39,14 @@ services:
       - frontend
       - backend
     restart: unless-stopped
+
+  # Database migrations - run with: docker compose run --rm migrate
+  migrate:
+    build: ./frontend
+    env_file: .env
+    command: npx prisma migrate deploy
+    profiles:
+      - migration
 
 volumes:
   caddy_data:
