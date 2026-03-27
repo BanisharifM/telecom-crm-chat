@@ -331,7 +331,7 @@ function MessageBubble({ msg, onDownloadCSV, onFollowup, isLast }: { msg: Displa
         )}
 
         {msg.dataRows && msg.dataRows.length > 1 && msg.chartType && !['none', 'table', 'metric'].includes(msg.chartType) && msg.dataColumns && (
-          <div className="mt-3 -mx-1" id={`chart-${msg.id}`}>
+          <div className="mt-3 min-w-0 overflow-hidden rounded-lg" id={`chart-${msg.id}`}>
             <PlotlyChart chartType={msg.chartType} columns={msg.dataColumns} data={msg.dataRows} config={msg.chartConfig || {}} />
           </div>
         )}

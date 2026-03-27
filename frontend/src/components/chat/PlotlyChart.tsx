@@ -77,7 +77,7 @@ function PlotlyChartInner({ chartType, columns, data, config, height = 350 }: Pr
       automargin: true,
       linecolor: lineColor,
       tickfont: { color: mutedColor, size: 11 },
-      title: { font: { color: mutedColor } },
+      title: x ? { text: x.replace(/_/g, ' '), font: { color: mutedColor, size: 12 }, standoff: 10 } : undefined,
     },
     yaxis: {
       showgrid: true,
@@ -86,7 +86,7 @@ function PlotlyChartInner({ chartType, columns, data, config, height = 350 }: Pr
       automargin: true,
       linecolor: lineColor,
       tickfont: { color: mutedColor, size: 11 },
-      title: { font: { color: mutedColor } },
+      title: y ? { text: y.replace(/_/g, ' '), font: { color: mutedColor, size: 12 }, standoff: 10 } : undefined,
       zerolinecolor: lineColor,
     },
     hoverlabel: {
