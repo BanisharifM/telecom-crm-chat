@@ -107,7 +107,23 @@ export default function ConversationPage() {
       // Query the AI
       const res = await sendChat(q, history)
 
-      // Save assistant message
+      // Add assistant response to pending immediately (with full data for info panel)
+      const assistantMsg: DisplayMessage = {
+        id: `pending-assistant-${Date.now()}`,
+        role: 'assistant',
+        content: res.explanation || res.error,
+        sqlQuery: res.sql,
+        chartType: res.chart_type,
+        chartConfig: res.chart_config,
+        dataColumns: res.columns,
+        dataRows: res.data,
+        queryTimeMs: res.query_time_ms,
+        rowsReturned: res.rows_returned,
+        createdAt: new Date().toISOString(),
+      }
+      setPendingMessages(prev => [...prev, assistantMsg])
+
+      // Save to DB in background
       await saveMessage({
         role: 'assistant',
         content: res.explanation || res.error,
@@ -120,7 +136,7 @@ export default function ConversationPage() {
         rowsReturned: res.rows_returned,
       })
 
-      // Refresh from DB and clear pending
+      // Refresh from DB and clear pending (DB now has the data)
       await mutate()
       setPendingMessages([])
     } catch (err: any) {
