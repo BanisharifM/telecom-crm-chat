@@ -34,7 +34,7 @@ export function AppSidebar({ user, conversations = [], onNewChat, onSignOut }: P
       {/* Brand - dark badge logo works on dark sidebar in both themes */}
       <div className="px-3 py-3 flex justify-center">
         <img
-          src="/logo-dark-badge.png"
+          src="/logo-dark.png"
           alt="TelecomCo"
           className="w-full max-w-[240px] h-auto object-contain rounded-lg"
         />

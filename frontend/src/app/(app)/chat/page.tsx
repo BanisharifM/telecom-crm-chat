@@ -98,7 +98,7 @@ export default function ChatPage() {
           <div className="max-w-2xl mx-auto pt-8 animate-fade-in">
             <div className="text-center mb-8">
               {/* Large high-res logo: dark badge for dark mode, light for light mode */}
-              <img src="/logo-dark-badge.png" alt="TelecomCo" className="w-80 max-w-full h-auto mx-auto mb-4 rounded-xl hidden dark:block" />
+              <img src="/logo-dark.png" alt="TelecomCo" className="w-80 max-w-full h-auto mx-auto mb-4 rounded-xl hidden dark:block" />
               <img src="/logo-light.png" alt="TelecomCo" className="w-80 max-w-full h-auto mx-auto mb-4 dark:hidden block" />
               <p className="text-muted-foreground mt-1">
                 Ask questions about <strong>3,333 telecom customers</strong> - churn, billing, service calls, and more.
