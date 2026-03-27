@@ -31,12 +31,12 @@ export function AppSidebar({ user, conversations = [], onNewChat, onSignOut }: P
 
   const sidebar = (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
-      {/* Brand */}
-      <div className="px-2 py-3 flex justify-center">
+      {/* Brand - dark badge logo works on dark sidebar in both themes */}
+      <div className="px-3 py-3 flex justify-center">
         <img
-          src="/logo-horizontal.png"
+          src="/logo-dark-badge.png"
           alt="TelecomCo"
-          className="w-full max-w-[220px] h-auto object-contain"
+          className="w-full max-w-[240px] h-auto object-contain rounded-lg"
         />
       </div>
 
