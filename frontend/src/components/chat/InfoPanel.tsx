@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { X, BarChart3, FileDown, Code2, Download, Copy, Check } from 'lucide-react'
+import { X, BarChart3, FileDown, Code2, Download, Copy, Check, Image } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { PlotlyChart } from '@/components/chat/PlotlyChart'
@@ -28,7 +28,6 @@ type Tab = 'charts' | 'files' | 'queries'
 export function InfoPanel({ open, onClose, messages }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>('charts')
 
-  // Extract items from ALL messages (not just current render)
   const charts = messages.filter(m =>
     m.chartType && !['none', 'table', 'metric'].includes(m.chartType) &&
     m.dataRows && Array.isArray(m.dataRows) && m.dataRows.length > 1
@@ -41,7 +40,7 @@ export function InfoPanel({ open, onClose, messages }: Props) {
   )
 
   const queries = messages.filter(m =>
-    m.sqlQuery && typeof m.sqlQuery === 'string' && m.sqlQuery !== 'SELECT 1' && m.sqlQuery.trim().length > 0
+    m.sqlQuery && typeof m.sqlQuery === 'string' && !m.sqlQuery.startsWith('SELECT 1') && m.sqlQuery.trim().length > 0
   )
 
   const tabs: { key: Tab; label: string; icon: any; count: number }[] = [
@@ -50,6 +49,30 @@ export function InfoPanel({ open, onClose, messages }: Props) {
     { key: 'queries', label: 'Queries', icon: Code2, count: queries.length },
   ]
 
+  // Download chart as PNG using Plotly API
+  const downloadChartPNG = (msg: MessageData) => {
+    // Find the rendered Plotly chart inside the info panel by message ID
+    const container = document.getElementById(`info-chart-${msg.id}`)
+    if (!container) return
+    const plotDiv = container.querySelector('.js-plotly-plot') as any
+    if (!plotDiv) return
+    try {
+      const Plotly = require('plotly.js-basic-dist-min')
+      const title = msg.chartConfig?.title
+        || msg.content?.substring(0, 30).replace(/[^a-zA-Z0-9 ]/g, '').trim().replace(/\s+/g, '_')
+        || 'chart'
+      Plotly.downloadImage(plotDiv, {
+        format: 'png',
+        width: 1200,
+        height: 600,
+        filename: title,
+      })
+    } catch {
+      // Silent fail
+    }
+  }
+
+  // Download data as CSV
   const downloadCSV = (msg: MessageData) => {
     if (!msg.dataColumns || !msg.dataRows) return
     const header = msg.dataColumns.join(',')
@@ -57,7 +80,6 @@ export function InfoPanel({ open, onClose, messages }: Props) {
     const blob = new Blob([header + '\n' + rows], { type: 'text/csv' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
-    // Meaningful filename from chart title or content
     const name = msg.chartConfig?.title
       || msg.content?.substring(0, 30).replace(/[^a-zA-Z0-9]/g, '_')
       || 'data'
@@ -71,16 +93,13 @@ export function InfoPanel({ open, onClose, messages }: Props) {
 
   return (
     <>
-      {/* Mobile overlay */}
       <div className="fixed inset-0 z-30 bg-black/50 md:hidden" onClick={onClose} />
 
-      {/* Panel */}
       <div className={cn(
         'fixed right-0 top-0 bottom-0 z-40 w-80 bg-card border-l border-border shadow-xl',
         'flex flex-col animate-slide-in-right',
         'md:relative md:z-0 md:shadow-none md:w-80 md:shrink-0'
       )}>
-        {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
           <h3 className="text-sm font-semibold">Conversation Details</h3>
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
@@ -88,7 +107,6 @@ export function InfoPanel({ open, onClose, messages }: Props) {
           </Button>
         </div>
 
-        {/* Tabs */}
         <div className="flex border-b border-border shrink-0">
           {tabs.map(tab => (
             <button
@@ -115,8 +133,8 @@ export function InfoPanel({ open, onClose, messages }: Props) {
           ))}
         </div>
 
-        {/* Tab content */}
         <div className="flex-1 overflow-y-auto p-3">
+          {/* Charts tab - renders mini charts with PNG download */}
           {activeTab === 'charts' && (
             <div className="space-y-3">
               {charts.length === 0 ? (
@@ -127,9 +145,8 @@ export function InfoPanel({ open, onClose, messages }: Props) {
                     <div className="text-xs font-medium px-1 mb-1 truncate">
                       {msg.chartConfig?.title || `${msg.chartType} chart`}
                     </div>
-                    {/* Render actual mini chart */}
                     {msg.dataColumns && msg.dataRows && msg.chartType && (
-                      <div className="w-full min-w-0 overflow-hidden rounded">
+                      <div className="w-full min-w-0 overflow-hidden rounded" id={`info-chart-${msg.id}`}>
                         <PlotlyChart
                           chartType={msg.chartType}
                           columns={msg.dataColumns}
@@ -143,8 +160,8 @@ export function InfoPanel({ open, onClose, messages }: Props) {
                       <span className="text-[10px] text-muted-foreground">
                         {msg.createdAt && new Date(msg.createdAt).toLocaleTimeString()}
                       </span>
-                      <Button variant="ghost" size="sm" className="h-6 text-[10px]" onClick={() => downloadCSV(msg)}>
-                        <Download className="h-3 w-3 mr-1" /> CSV
+                      <Button variant="ghost" size="sm" className="h-6 text-[10px]" onClick={() => downloadChartPNG(msg)}>
+                        <Image className="h-3 w-3 mr-1" /> PNG
                       </Button>
                     </div>
                   </div>
@@ -153,6 +170,7 @@ export function InfoPanel({ open, onClose, messages }: Props) {
             </div>
           )}
 
+          {/* Files tab - CSV data downloads */}
           {activeTab === 'files' && (
             <div className="space-y-2">
               {files.length === 0 ? (
@@ -182,6 +200,7 @@ export function InfoPanel({ open, onClose, messages }: Props) {
             </div>
           )}
 
+          {/* Queries tab - SQL with copy */}
           {activeTab === 'queries' && (
             <div className="space-y-2">
               {queries.length === 0 ? (
@@ -217,12 +236,7 @@ function QueryItem({ sql, createdAt }: { sql: string; createdAt?: string }) {
         <span className="text-[10px] text-muted-foreground">
           {createdAt && new Date(createdAt).toLocaleTimeString()}
         </span>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-6 text-[10px]"
-          onClick={handleCopy}
-        >
+        <Button variant="ghost" size="sm" className="h-6 text-[10px]" onClick={handleCopy}>
           {copied ? <Check className="h-3 w-3 mr-1" /> : <Copy className="h-3 w-3 mr-1" />}
           {copied ? 'Copied' : 'Copy'}
         </Button>
