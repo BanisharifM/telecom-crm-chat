@@ -136,20 +136,23 @@
 .chat-markdown a {
   @apply text-primary underline hover:text-primary/80;
 }
-/* Inline code: ChatGPT/Claude/GitHub pattern
-   !important needed to override highlight.js styles from rehype-highlight */
+/* Inline code styling (GitHub/Claude pattern)
+   Solid colors matched to our theme, !important to override rehype-highlight */
 .chat-markdown code:not(pre code) {
-  background: rgba(0, 0, 0, 0.06) !important;
-  padding: 0.15em 0.4em !important;
-  border-radius: 0.25rem !important;
+  background: #E2E8F0 !important;
+  color: #0F172A !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
   font-size: 0.85em !important;
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace !important;
+  font-family: ui-monospace, "Cascadia Code", "SF Mono", SFMono-Regular, "Fira Code", Menlo, Consolas, "Liberation Mono", monospace !important;
   font-weight: 400 !important;
-  color: inherit !important;
   word-break: break-word !important;
+  border: 1px solid rgba(15, 23, 42, 0.1) !important;
 }
 .dark .chat-markdown code:not(pre code) {
-  background: rgba(255, 255, 255, 0.12) !important;
+  background: #334155 !important;
+  color: #E2E8F0 !important;
+  border-color: rgba(148, 163, 184, 0.2) !important;
 }
 .chat-markdown pre {
   @apply my-2 rounded-lg overflow-x-auto;
