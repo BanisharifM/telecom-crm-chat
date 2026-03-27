@@ -180,9 +180,9 @@ export default function ConversationPage() {
           <p className="text-sm text-muted-foreground">Ask questions about your CRM data in plain English.</p>
         </div>
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
-          className="text-xs text-muted-foreground"
+          className="text-xs text-muted-foreground border-border hover:text-foreground hover:border-primary/40 transition-colors"
           onClick={() => setInfoPanelOpen(!infoPanelOpen)}
         >
           {infoPanelOpen ? 'Hide Details' : 'Details'}
