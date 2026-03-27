@@ -14,12 +14,10 @@ load_dotenv(Path(__file__).parent.parent.parent.parent / ".env")
 
 def _get_api_key() -> str:
     """Get API key from environment, .env, or Streamlit secrets."""
-    # 1. Try environment variable (set via .env or system)
     key = os.environ.get("OPENROUTER_API_KEY", "")
     if key:
         return key
 
-    # 2. Try Streamlit secrets (for Streamlit Cloud deployment)
     try:
         import streamlit as st
         if hasattr(st, "secrets") and "OPENROUTER_API_KEY" in st.secrets:
@@ -34,13 +32,19 @@ def _get_api_key() -> str:
 class Settings:
     """Application settings loaded from environment."""
 
-    # OpenRouter API (OpenAI-compatible endpoint)
+    # OpenRouter API
     openrouter_api_key: str = field(default_factory=_get_api_key)
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
     llm_model: str = "anthropic/claude-sonnet-4.6"
 
     # Database
     data_file: str = "data-agent-task/churn-bigml-full.xlsx"
+    database_url: str = field(
+        default_factory=lambda: os.environ.get("DATABASE_URL", "")
+    )
+    database_backend: str = field(
+        default_factory=lambda: "postgres" if os.environ.get("DATABASE_URL") else "duckdb"
+    )
 
     # Query settings
     max_retries: int = 3
@@ -55,5 +59,5 @@ class Settings:
 
 
 def get_settings() -> Settings:
-    """Get application settings. Creates a new instance each time to pick up secrets."""
+    """Get application settings."""
     return Settings()

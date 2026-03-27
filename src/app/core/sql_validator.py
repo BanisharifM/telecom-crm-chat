@@ -23,7 +23,7 @@ class SQLValidationError(Exception):
     pass
 
 
-def validate_sql(sql: str) -> str:
+def validate_sql(sql: str, dialect: str = "postgres") -> str:
     """Validate and sanitize LLM-generated SQL.
 
     Returns the cleaned SQL if valid.
@@ -38,7 +38,7 @@ def validate_sql(sql: str) -> str:
     _check_blocked_keywords(sql)
 
     # Parse and validate structure
-    _validate_structure(sql)
+    _validate_structure(sql, dialect=dialect)
 
     # Ensure LIMIT exists
     sql = _ensure_limit(sql)
@@ -58,10 +58,10 @@ def _check_blocked_keywords(sql: str) -> None:
             )
 
 
-def _validate_structure(sql: str) -> None:
+def _validate_structure(sql: str, dialect: str = "postgres") -> None:
     """Parse SQL and validate it's a SELECT with valid references."""
     try:
-        parsed = sqlglot.parse_one(sql, dialect="duckdb")
+        parsed = sqlglot.parse_one(sql, dialect=dialect)
     except sqlglot.errors.ParseError as e:
         raise SQLValidationError(f"SQL syntax error: {e}") from e
 

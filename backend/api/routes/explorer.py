@@ -4,18 +4,24 @@ from fastapi import APIRouter, Query
 from fastapi.responses import StreamingResponse
 import io
 
-from app.core.database import execute_query
-from backend.api.deps import get_db
+from app.core.database import execute_query, execute_query_postgres
+from backend.api.deps import get_db, get_app_settings
 from backend.schemas.explorer import ExplorerResponse, FilterOptions
 
 router = APIRouter(prefix="/explorer", tags=["explorer"])
 
 
+def _run_query(sql: str):
+    settings = get_app_settings()
+    if settings.database_backend == "postgres":
+        return execute_query_postgres(sql)
+    return execute_query(get_db(), sql)
+
+
 @router.get("/filters", response_model=FilterOptions)
 def filters():
-    db = get_db()
-    states = execute_query(db, 'SELECT DISTINCT "State" FROM customers ORDER BY "State"')["State"].tolist()
-    return FilterOptions(states=states)
+    df = _run_query('SELECT DISTINCT "State" FROM customers ORDER BY "State"')
+    return FilterOptions(states=df["State"].tolist())
 
 
 def _build_where(state: str, intl: str, vm: str, churn: str) -> str:
@@ -42,20 +48,21 @@ def data(
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=10, le=200),
 ):
-    db = get_db()
     where = _build_where(state, international_plan, voice_mail_plan, churn)
     offset = (page - 1) * page_size
 
-    df = execute_query(db, f"SELECT * FROM customers {where} ORDER BY customer_id LIMIT {page_size} OFFSET {offset}")
-    count_row = db.execute(f"SELECT COUNT(*), SUM(CASE WHEN \"Churn\" THEN 1 ELSE 0 END) FROM customers {where}").fetchone()
-    filtered = int(count_row[0])
-    churned = int(count_row[1] or 0)
-    total = db.execute("SELECT COUNT(*) FROM customers").fetchone()[0]
+    df = _run_query(f"SELECT * FROM customers {where} ORDER BY customer_id LIMIT {page_size} OFFSET {offset}")
+    count_df = _run_query(f'SELECT COUNT(*) as cnt, SUM(CASE WHEN "Churn" THEN 1 ELSE 0 END) as churned FROM customers {where}')
+    total_df = _run_query("SELECT COUNT(*) as cnt FROM customers")
+
+    filtered = int(count_df.iloc[0]["cnt"])
+    churned = int(count_df.iloc[0]["churned"] or 0)
+    total = int(total_df.iloc[0]["cnt"])
 
     return ExplorerResponse(
         columns=df.columns.tolist(),
         data=df.fillna("").values.tolist(),
-        total_rows=int(total),
+        total_rows=total,
         filtered_rows=filtered,
         churned=churned,
         churn_rate=round(churned / filtered * 100, 1) if filtered > 0 else 0,
@@ -69,9 +76,8 @@ def download(
     voice_mail_plan: str = Query("All"),
     churn: str = Query("All"),
 ):
-    db = get_db()
     where = _build_where(state, international_plan, voice_mail_plan, churn)
-    df = execute_query(db, f"SELECT * FROM customers {where} ORDER BY customer_id")
+    df = _run_query(f"SELECT * FROM customers {where} ORDER BY customer_id")
 
     buffer = io.StringIO()
     df.to_csv(buffer, index=False)

@@ -5,13 +5,13 @@ from __future__ import annotations
 import logging
 import time
 from dataclasses import dataclass, field
+from typing import Any
 
 from openai import OpenAI
-import duckdb
 import pandas as pd
 
 from app.core.config import Settings
-from app.core.database import execute_query
+from app.core.database import execute_query, execute_query_postgres
 from app.core.llm import LLMResponse, generate_sql, generate_sql_with_retry
 from app.core.sql_validator import SQLValidationError, fuzzy_fix_columns, validate_sql
 
@@ -37,7 +37,7 @@ class QueryResult:
 def process_question(
     question: str,
     client: OpenAI,
-    conn: duckdb.DuckDBPyConnection,
+    conn: Any,  # DuckDB connection or None for PostgreSQL
     settings: Settings,
     conversation_history: list[dict] | None = None,
 ) -> QueryResult:
@@ -47,12 +47,14 @@ def process_question(
     1. Send question to LLM -> get SQL + chart config
     2. Apply fuzzy column name fixes
     3. Validate SQL (schema check, statement type, LIMIT)
-    4. Execute against DuckDB
+    4. Execute against database (PostgreSQL or DuckDB)
     5. Return structured result
 
     On failure: retry up to max_retries with error feedback to LLM.
     """
     start = time.time()
+    use_postgres = settings.database_backend == "postgres"
+    dialect = "postgres" if use_postgres else "duckdb"
 
     # Step 1: Generate SQL via LLM
     try:
@@ -72,6 +74,7 @@ def process_question(
 
     # Step 2-4: Validate and execute with retries
     last_error = ""
+    sql = ""
     for attempt in range(settings.max_retries):
         sql = llm_response.sql
 
@@ -80,10 +83,13 @@ def process_question(
             sql = fuzzy_fix_columns(sql)
 
             # Step 3: Validate
-            sql = validate_sql(sql)
+            sql = validate_sql(sql, dialect=dialect)
 
             # Step 4: Execute
-            df = execute_query(conn, sql)
+            if use_postgres:
+                df = execute_query_postgres(sql)
+            else:
+                df = execute_query(conn, sql)
 
             elapsed = (time.time() - start) * 1000
 
@@ -102,12 +108,9 @@ def process_question(
         except SQLValidationError as e:
             last_error = str(e)
             logger.warning(f"SQL validation failed (attempt {attempt + 1}): {e}")
-        except duckdb.Error as e:
-            last_error = str(e)
-            logger.warning(f"DuckDB execution failed (attempt {attempt + 1}): {e}")
         except Exception as e:
             last_error = str(e)
-            logger.warning(f"Unexpected error (attempt {attempt + 1}): {e}")
+            logger.warning(f"Query execution failed (attempt {attempt + 1}): {e}")
 
         # Retry with error feedback
         if attempt < settings.max_retries - 1:
@@ -127,7 +130,7 @@ def process_question(
     return QueryResult(
         success=False,
         question=question,
-        sql=sql if "sql" in dir() else "",
+        sql=sql,
         error=f"I wasn't able to generate a valid query after {settings.max_retries} attempts. "
         f"Last error: {last_error}",
         query_time_ms=round(elapsed, 1),
