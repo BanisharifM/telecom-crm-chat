@@ -48,7 +48,7 @@ export const ChatMarkdown = memo(({ content }: Props) => (
       components={{
         code({ inline, className, children, ...props }: any) {
           if (inline) {
-            return <code className="bg-muted px-1.5 py-0.5 rounded text-[0.9em] font-mono" {...props}>{children}</code>
+            return <code {...props}>{children}</code>
           }
           return <CodeBlock className={className}>{children}</CodeBlock>
         },
