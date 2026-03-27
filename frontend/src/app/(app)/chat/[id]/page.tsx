@@ -15,6 +15,7 @@ import { PlotlyChart } from '@/components/chat/PlotlyChart'
 import { DateSeparator, shouldShowDateSeparator } from '@/components/chat/DateSeparator'
 import { ScrollToBottom } from '@/components/chat/ScrollToBottom'
 import { MessageActions } from '@/components/chat/MessageActions'
+import { InfoPanel } from '@/components/chat/InfoPanel'
 
 const fetcher = (url: string) => fetch(url).then(r => r.json())
 
@@ -44,6 +45,7 @@ export default function ConversationPage() {
   const [pendingMessages, setPendingMessages] = useState<DisplayMessage[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [infoPanelOpen, setInfoPanelOpen] = useState(false)
   const endRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
@@ -145,12 +147,26 @@ export default function ConversationPage() {
     URL.revokeObjectURL(url)
   }
 
+  // Prepare assistant messages for info panel
+  const assistantMessages = messages.filter(m => m.role === 'assistant')
+
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex h-full">
+      <div className="flex flex-col flex-1 min-w-0">
       {/* Header */}
-      <div className="border-b px-4 py-3 md:px-6 shrink-0">
-        <h1 className="text-lg font-bold tracking-tight">Chat</h1>
-        <p className="text-sm text-muted-foreground">Ask questions about your CRM data in plain English.</p>
+      <div className="border-b px-4 py-3 md:px-6 shrink-0 flex items-center justify-between">
+        <div>
+          <h1 className="text-lg font-bold tracking-tight">Chat</h1>
+          <p className="text-sm text-muted-foreground">Ask questions about your CRM data in plain English.</p>
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-xs text-muted-foreground"
+          onClick={() => setInfoPanelOpen(!infoPanelOpen)}
+        >
+          {infoPanelOpen ? 'Hide Details' : 'Details'}
+        </Button>
       </div>
 
       {/* Messages */}
@@ -212,6 +228,14 @@ export default function ConversationPage() {
           </Button>
         </div>
       </div>
+      </div> {/* end flex-col flex-1 */}
+
+      {/* Info Panel */}
+      <InfoPanel
+        open={infoPanelOpen}
+        onClose={() => setInfoPanelOpen(false)}
+        messages={assistantMessages}
+      />
     </div>
   )
 }
